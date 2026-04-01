@@ -55,6 +55,9 @@ INSTRUCTIONS
 5. Match tone/vocabulary to the company culture from research data.
 6. Rate match score 0–100 realistically.
 7. Write a 2-sentence summary opening with the target job title highlighting top 2 strengths.
+8. Add Trailhead in the header instead of github for Salesforce Jobs.
+9. According to company location and job location, add remote or open to reloation in the heading.
+10. Keep it concise enough to fit on a single page.
 
 RULES: Never invent metrics or skills. Enhance wording only — do not fabricate.
 

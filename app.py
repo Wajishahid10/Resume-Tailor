@@ -99,14 +99,13 @@ def score_color(score: int) -> str:
 # ─── Session state init ───────────────────────────────────────────────────────
 
 defaults = {
-    "profile":           None,
-    "generated":         None,
-    "latex_source":      None,
-    "pdf_bytes":         None,
-    "company_research":  None,
-    "research_done":     False,
-    "last_job_title":    "",
-    "last_company":      "",
+    "profile":          None,
+    "generated":        None,
+    "latex_source":     None,
+    "pdf_bytes":        None,
+    "company_research": None,
+    "last_job_title":   "",
+    "last_company":     "",
 }
 for k, v in defaults.items():
     if k not in st.session_state:
@@ -169,7 +168,7 @@ with st.sidebar:
     st.caption("🔑 **Keys stored in** `.streamlit/secrets.toml`")
     gemini_ok = get_gemini_key()
     st.markdown(f"{'✅' if gemini_ok else '❌'} Gemini API")
-    st.markdown("✅ Company Research (DuckDuckGo — no key needed)")
+    st.markdown("✅ Company Research (DuckDuckGo)")
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
@@ -275,8 +274,15 @@ with tab1:
             status = st.empty()
 
             try:
-                status.info("🤖 Step 1/3 — Analysing JD & selecting relevant content…")
-                bar.progress(20)
+                if company_name:
+                    status.info("🔍 Step 1/4 — Researching company via DuckDuckGo…")
+                    bar.progress(10)
+                    st.session_state.company_research = research_company(
+                        company_name, job_title=job_title
+                    )
+
+                status.info("🤖 Step 2/4 — Analysing JD & selecting relevant content…")
+                bar.progress(30)
 
                 generated = generate_cv_content(
                     profile=st.session_state.profile,
@@ -290,8 +296,8 @@ with tab1:
                 st.session_state.last_job_title = job_title
                 st.session_state.last_company   = company_name
 
-                status.info("🔧 Step 2/3 — Building LaTeX document…")
-                bar.progress(55)
+                status.info("🔧 Step 3/4 — Building LaTeX document…")
+                bar.progress(65)
 
                 latex_src = build_latex(
                     profile=st.session_state.profile,
@@ -301,8 +307,8 @@ with tab1:
                 )
                 st.session_state.latex_source = latex_src
 
-                status.info("⚙️ Step 3/3 — Compiling PDF with pdflatex…")
-                bar.progress(80)
+                status.info("⚙️ Step 4/4 — Compiling PDF with pdflatex…")
+                bar.progress(85)
 
                 pdf = compile_latex_to_pdf(latex_src)
                 st.session_state.pdf_bytes = pdf
