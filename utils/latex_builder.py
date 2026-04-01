@@ -41,17 +41,51 @@ def esc_url(url: str) -> str:
     return url.replace("%", r"\%").replace("#", r"\#")
 
 
+# ─── Salesforce detection ─────────────────────────────────────────────────────
+
+_SALESFORCE_KEYWORDS = {
+    "salesforce", "sfdc", "apex", "lwc", "lightning",
+    "trailhead", "service cloud", "sales cloud", "cpq",
+}
+
+def _is_salesforce_role(job_title: str) -> bool:
+    t = job_title.lower()
+    return any(kw in t for kw in _SALESFORCE_KEYWORDS)
+
+
+# ─── Location resolver ────────────────────────────────────────────────────────
+
+def _resolve_location(profile: dict, job_location: str) -> str:
+    """
+    Returns the right location string for the CV header:
+      - 'Remote'           if job is remote
+      - profile.relocation if job is in a different city/country
+      - profile.location   otherwise / if job_location is blank
+    """
+    profile_loc = profile.get("location",   "")
+    relocation  = profile.get("relocation", "")
+    jl = (job_location or "").strip().lower()
+
+    if not jl:
+        return profile_loc
+    if "remote" in jl:
+        return "Remote"
+    if jl not in profile_loc.lower():
+        return relocation or profile_loc
+    return profile_loc
+
+
 # ─── Section builders ─────────────────────────────────────────────────────────
 
 def _build_education(profile: dict) -> str:
     lines = []
     for edu in profile.get("education", []):
-        inst      = esc(edu.get("institution", ""))
-        loc       = esc(edu.get("location", profile.get("location", "")))
-        degree    = esc(edu.get("degree", ""))
-        date      = esc(edu.get("date", ""))
-        gpa       = edu.get("gpa", "")
-        cw        = edu.get("coursework", [])
+        inst   = esc(edu.get("institution", ""))
+        loc    = esc(edu.get("location", profile.get("location", "")))
+        degree = esc(edu.get("degree", ""))
+        date   = esc(edu.get("date", ""))
+        gpa    = edu.get("gpa", "")
+        cw     = edu.get("coursework", [])
 
         lines.append(
             f"    \\resumeSubheading\n"
@@ -235,12 +269,12 @@ def build_latex(
     trailhead = profile.get("trailhead", "").strip().lstrip("https://").lstrip("http://")
 
     # Trailhead for Salesforce roles, GitHub otherwise
-    profile_link      = trailhead if (_is_salesforce_role(job_title) and trailhead) else github
+    profile_link       = trailhead if (_is_salesforce_role(job_title) and trailhead) else github
     profile_link_label = "Trailhead" if (_is_salesforce_role(job_title) and trailhead) else "GitHub"
 
     display_location = esc(_resolve_location(profile, job_location))
 
-    # Prefer generated content; fall back to raw profile
+    # Prefer AI-selected content; fall back to raw profile
     experiences = generated.get("selected_experience") or profile.get("experience", [])
     projects    = generated.get("selected_projects")   or profile.get("projects",   [])
     skills      = generated.get("selected_skills")     or profile.get("skills",     {})
@@ -251,7 +285,6 @@ def build_latex(
     proj_tex = _build_projects(projects)
     sk_tex   = _build_skills(skills)
 
-    # Optional summary section
     summary_block = ""
     if summary:
         summary_block = (
@@ -269,10 +302,10 @@ def build_latex(
         f"    \\textbf{{\\Huge \\scshape {name}}} \\\\ \\vspace{{1pt}}\n"
         f"    \\small {phone} $|$\n"
         f"    \\href{{mailto:{email}}}{{\\underline{{{email}}}}} $|$\n"
-        f"    \\href{{https://{esc_url(linkedin)}}}{{\\underline{{{esc(linkedin)}}}}}\n"
-        + (f"    $|$ \\href{{https://{esc_url(profile_link)}}}{{\\underline{{{profile_link_label}}}}}\n"
+        f"    \\href{{https://{esc_url(linkedin)}}}{{\\underline{{{esc(linkedin)}}}}}"
+        + (f" $|$ \\href{{https://{esc_url(profile_link)}}}{{\\underline{{{profile_link_label}}}}}"
            if profile_link else "")
-        + f"    $|$ {display_location}\n"
+        + f" $|$ {display_location}\n"
         + "\\end{center}\n\n"
         + summary_block
         + "%----------- EDUCATION -----------\n"
@@ -302,7 +335,7 @@ def build_latex(
     return doc
 
 
-# ─── Compilation ──────────────────────────────────────────────────────────────
+# ─── pdflatex check ───────────────────────────────────────────────────────────
 
 def _check_pdflatex():
     """Raise a clear error if pdflatex is not available in PATH."""
@@ -310,9 +343,9 @@ def _check_pdflatex():
         raise EnvironmentError(
             "pdflatex not found in PATH.\n\n"
             "── Windows ──\n"
-            "  1. Download and install MiKTeX: https://miktex.org/download\n"
-            "     (tick 'Install missing packages on-the-fly = Yes')\n"
-            "  2. Restart your terminal / Streamlit after install.\n\n"
+            "  1. Download MiKTeX: https://miktex.org/download\n"
+            "     (set 'Install missing packages on-the-fly = Yes')\n"
+            "  2. Restart your terminal after install.\n\n"
             "── macOS ──\n"
             "  brew install --cask mactex\n\n"
             "── Linux / Streamlit Cloud ──\n"
@@ -320,38 +353,11 @@ def _check_pdflatex():
         )
 
 
-_SALESFORCE_KEYWORDS = {
-    "salesforce", "sfdc", "apex", "lwc", "lightning",
-    "trailhead", "service cloud", "sales cloud", "cpq",
-}
+# ─── Compilation ──────────────────────────────────────────────────────────────
 
-def _is_salesforce_role(job_title: str) -> bool:
-    t = job_title.lower()
-    return any(kw in t for kw in _SALESFORCE_KEYWORDS)
-
-
-def _resolve_location(profile: dict, job_location: str) -> str:
-    """
-    Returns the right location string for the CV header:
-      - 'Remote'            if job is remote
-      - profile.relocation  if job is in a different city/country
-      - profile.location    otherwise / if job_location is blank
-    """
-    profile_loc = profile.get("location",   "")
-    relocation  = profile.get("relocation", "")
-    jl = (job_location or "").strip().lower()
-
-    if not jl:
-        return profile_loc
-    if "remote" in jl:
-        return "Remote"
-    # Different location → offer relocation text if available
-    if jl not in profile_loc.lower():
-        return relocation or profile_loc
-    return profile_loc
+def compile_latex_to_pdf(latex_content: str, timeout: int = 90) -> bytes:
     """
     Write LaTeX to a temp dir, run pdflatex twice, return PDF bytes.
-
     Raises RuntimeError with compiler output on failure.
     """
     _check_pdflatex()   # fast-fail with a helpful message if not installed
