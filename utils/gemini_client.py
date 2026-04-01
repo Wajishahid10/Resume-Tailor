@@ -18,8 +18,12 @@ def generate_cv_content(
 ) -> dict:
     client = genai.Client(api_key=gemini_api_key)
 
-    profile_json  = json.dumps(profile,          indent=2)
-    research_json = json.dumps(company_research, indent=2)
+    profile_json  = json.dumps({
+        k: v for k, v in profile.items()
+        if k != "salesforce_skills"   # sent separately below
+    }, indent=2)
+    sf_skills_json  = json.dumps(profile.get("salesforce_skills", {}), indent=2)
+    research_json   = json.dumps(company_research, indent=2)
 
     # Calculate total years of experience from profile
     prompt = f"""You are a senior technical recruiter and ATS optimisation expert with deep knowledge of
@@ -31,6 +35,12 @@ Your task: produce a perfectly tailored, ATS-friendly resume for the candidate b
 CANDIDATE PROFILE
 ════════════════════════════════
 {profile_json}
+
+════════════════════════════════
+CANDIDATE SALESFORCE SKILLS
+(use for Salesforce roles only)
+════════════════════════════════
+{sf_skills_json}
 
 ════════════════════════════════
 TARGET ROLE
@@ -99,19 +109,34 @@ JD-SPECIFIC TOOLS: If the JD mentions tools the candidate has NOT used but has
 - Never invent skills.
 - If the JD mentions specific tools the candidate hasn't used but has a close
   equivalent, surface the equivalent prominently in the relevant category.
-- Detect the role domain from the job title and description, then return skills
-  grouped into the most appropriate named categories for that domain.
 
-For SALESFORCE roles, use these exact category keys:
-  "sf_clouds", "sf_ai_automation", "sf_features", "sf_development",
-  "sf_apis_integrations", "sf_cicd_deployment", "sf_data_security",
-  "sf_developer_tools", "sf_languages", "sf_methodologies"
+CRITICAL — CATEGORY KEYS:
+First, determine if this is a Salesforce-related role by checking if the job title
+or description contains any of: salesforce, sfdc, apex, lwc, lightning, trailhead,
+service cloud, sales cloud, cpq, force.com.
 
-For NON-SALESFORCE roles, use these generic keys:
-  "languages", "frameworks", "tools", "other"
+If YES (Salesforce role):
+- Draw skills PRIMARILY from the SALESFORCE SKILLS section above.
+- Supplement with relevant items from profile "skills" → languages and tools
+  (e.g. Python, Git, Postman) where the JD warrants them.
+- Return using ONLY these exact SF category keys:
+    "sf_clouds"            → platform clouds (Sales Cloud, Service Cloud, etc.)
+    "sf_ai_automation"     → AI and automation tools (Agentforce, Flow Builder, etc.)
+    "sf_features"          → Salesforce config features (CPQ, Dynamic Forms, etc.)
+    "sf_development"       → code and dev (Apex, LWC, SOQL, Triggers, etc.)
+    "sf_apis_integrations" → APIs and integrations (REST, SOAP, OAuth 2.0, etc.)
+    "sf_cicd_deployment"   → DevOps (SFDX, Unlocked Packages, Change Sets, etc.)
+    "sf_data_security"     → data and security (Data Loader, Permission Sets, etc.)
+    "sf_developer_tools"   → general dev tools (Git, Postman, VS Code, Jira, etc.)
+    "sf_languages"         → programming languages (JavaScript, Python, Apex, etc.)
+    "sf_methodologies"     → process (Agile, Scrum, SDLC, Code Review, etc.)
 
-Return whichever set of keys fits the role — never mix both sets.
-Only include a category if it has at least one item.
+If NO (non-Salesforce role):
+- Draw skills ONLY from the profile "skills" section.
+- Return using ONLY these generic keys:
+    "languages", "frameworks", "tools", "other"
+
+NEVER mix SF keys and generic keys. NEVER invent skills absent from the profile.
 
 ── 5. PROJECT SELECTION ──
 - Select 2-3 projects maximum that best match JD requirements.
@@ -123,6 +148,10 @@ Only include a category if it has at least one item.
 - Use consistent tense: past tense for all completed roles, present for current role.
 - Do not start two consecutive bullets with the same word.
 - Remove filler phrases: "in order to", "as well as", "a wide range of", "various".
+- NEVER use third-person ("He", "She", "Muhammad") in the professional summary.
+  Write in first-person implied style: "Senior Salesforce Developer with X years..."
+- ABSOLUTELY NO MARKDOWN in any text field. No **bold**, no *italic*, no __underline__,
+  no `backticks`. Plain text only in all bullets, summaries, and descriptions.
 - Keep it concise enough to fit on a single page.
 
 ── 7. MATCH SCORE ──
@@ -193,9 +222,22 @@ OUTPUT JSON SCHEMA
     )
 
     try:
-        return json.loads(response.text)
+        result = json.loads(response.text)
+        return _strip_markdown(result)
     except json.JSONDecodeError as e:
         raise ValueError(
             f"Gemini returned invalid JSON.\nError: {e}\n"
             f"Raw (first 500 chars):\n{response.text[:500]}"
         )
+
+
+def _strip_markdown(obj):
+    """Recursively strip markdown bold/italic markers from all string values."""
+    if isinstance(obj, str):
+        obj = obj.replace("**", "").replace("__", "").replace("*", "").replace("`", "")
+        return obj
+    elif isinstance(obj, list):
+        return [_strip_markdown(i) for i in obj]
+    elif isinstance(obj, dict):
+        return {k: _strip_markdown(v) for k, v in obj.items()}
+    return obj

@@ -59,17 +59,35 @@ def _to_plain(obj):
     return obj
 
 
+_SF_SKILL_KEYS = [
+    "sf_languages", "sf_clouds", "sf_ai_automation", "sf_features",
+    "sf_development", "sf_apis_integrations", "sf_cicd_deployment",
+    "sf_data_security", "sf_developer_tools", "sf_methodologies",
+]
+
 def load_profile_from_secrets() -> dict:
     """Load and normalise the [profile] block from secrets.toml."""
     try:
         raw     = st.secrets["profile"]
         profile = _to_plain(raw)
 
-        # Ensure lists for skills sub-keys
+        # General skills
         for cat in ["languages", "frameworks", "tools", "other"]:
             skills = profile.get("skills", {})
             if cat in skills:
                 skills[cat] = list(skills[cat])
+
+        # Salesforce skills
+        sf_skills = profile.get("salesforce_skills", {})
+        for cat in _SF_SKILL_KEYS:
+            if cat in sf_skills:
+                sf_skills[cat] = list(sf_skills[cat])
+        profile["salesforce_skills"] = sf_skills
+
+        # Certifications
+        profile["certifications"] = [
+            dict(c) for c in profile.get("certifications", [])
+        ]
 
         # Ensure bullets lists on experience / projects
         for exp in profile.get("experience", []):
@@ -195,11 +213,24 @@ with tab1:
             placeholder="e.g. Google",
             value=st.session_state.last_company,
         )
-        job_location = st.text_input(
-            "Job Location (optional)",
-            placeholder="e.g. Remote / New York, NY / London, UK",
-            value=st.session_state.last_location or "Open to Relocation",
+        st.markdown("**Job Location**")
+        loc_choice = st.radio(
+            "Job Location",
+            ["Remote", "Lahore, Pakistan", "Custom"],
+            index=0,
+            horizontal=True,
+            label_visibility="collapsed",
         )
+        if loc_choice == "Custom":
+            job_location = st.text_input(
+                "Enter location",
+                placeholder="e.g. New York, NY / London, UK",
+                value=st.session_state.last_location
+                      if st.session_state.last_location not in ("Remote", "Lahore, Pakistan", "")
+                      else "",
+            )
+        else:
+            job_location = loc_choice
 
     with col_r:
         st.subheader("📋 Job Description")
