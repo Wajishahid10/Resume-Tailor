@@ -7,7 +7,6 @@ Uses the new google-genai SDK (google.genai.Client).
 """
 
 import json
-import re
 import io
 import pdfplumber
 from google import genai
@@ -89,48 +88,36 @@ def _clean_json(text: str) -> str:
 def _gemini_extract(text: str, api_key: str) -> dict:
     client = genai.Client(api_key=api_key)
 
-    prompt = f"""You are a precise information extraction assistant.
+    prompt = f"""Extract ALL information from the CV text below and return it as JSON matching the schema exactly.
 
-Extract ALL information from the CV text below and return it as valid JSON
-matching the exact schema provided. Follow these rules strictly:
+Rules:
+- Preserve all dates exactly as written
+- Copy bullet points verbatim
+- Split skills: languages=programming languages, frameworks=libraries/frameworks, tools=DevOps/cloud/databases/IDEs, other=methodologies/soft skills
+- Leave fields empty ("" or []) if not present
 
-- Preserve all dates exactly as written (e.g. "Aug 2022 – May 2023")
-- Copy bullet points verbatim — do not summarise or rewrite them
-- Split skills into the correct categories: languages (programming languages),
-  frameworks (libraries/frameworks), tools (DevOps, IDEs, cloud, databases),
-  other (soft skills, methodologies, etc.)
-- Leave any field empty ("" or []) if the information is not present
-- Return ONLY valid JSON — no markdown fences, no commentary
-
-════════════════════════════════
-REQUIRED SCHEMA
-════════════════════════════════
+REQUIRED SCHEMA:
 {_SCHEMA_STR}
 
-════════════════════════════════
-CV TEXT
-════════════════════════════════
-{text}
-
-Return ONLY the JSON object."""
+CV TEXT:
+{text}"""
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=prompt,
         config=types.GenerateContentConfig(
             temperature=0.1,
-            max_output_tokens=8192,
+            max_output_tokens=16384,
+            response_mime_type="application/json",   # ← guarantees valid JSON
         ),
     )
 
-    raw = _clean_json(response.text)
     try:
-        return json.loads(raw)
+        return json.loads(response.text)
     except json.JSONDecodeError as e:
         raise ValueError(
             f"Gemini returned invalid JSON while parsing CV.\n"
-            f"Error: {e}\n"
-            f"Raw response (first 600 chars):\n{raw[:600]}"
+            f"Error: {e}\nRaw (first 600 chars):\n{response.text[:600]}"
         )
 
 

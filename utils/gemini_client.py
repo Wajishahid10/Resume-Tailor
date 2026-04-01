@@ -1,89 +1,12 @@
 """
 Gemini 2.5 Flash — ATS CV content generation.
-Uses the new google-genai SDK (google.genai.Client).
+Uses response_mime_type="application/json" to guarantee valid JSON output.
 """
 
 import json
-import re
 from google import genai
 from google.genai import types
 
-
-# ─── Helpers ──────────────────────────────────────────────────────────────────
-
-def _clean_json(text: str) -> str:
-    """Strip markdown fences that Gemini sometimes wraps around JSON."""
-    text = text.strip()
-    text = re.sub(r"^```(?:json)?\s*", "", text)
-    text = re.sub(r"\s*```$",          "", text)
-    return text.strip()
-
-
-def _parse_json(text: str) -> dict:
-    clean = _clean_json(text)
-    try:
-        return json.loads(clean)
-    except json.JSONDecodeError as e:
-        # ── Recovery 1: find the last complete top-level object ────────────
-        try:
-            depth, last_close = 0, 0
-            for i, ch in enumerate(clean):
-                if ch == "{": depth += 1
-                elif ch == "}":
-                    depth -= 1
-                    if depth == 0:
-                        last_close = i + 1
-            if last_close:
-                return json.loads(clean[:last_close])
-        except Exception:
-            pass
-
-        # ── Recovery 2: auto-close truncated JSON ──────────────────────────
-        try:
-            fixed = _autoclose_json(clean)
-            return json.loads(fixed)
-        except Exception:
-            pass
-
-        raise ValueError(
-            f"Gemini returned unparseable JSON.\nOriginal error: {e}\n"
-            f"Raw response (first 500 chars):\n{text[:500]}"
-        )
-
-
-def _autoclose_json(s: str) -> str:
-    """Close any unclosed brackets/braces/strings in truncated JSON."""
-    in_str, escape = False, False
-    opens = []
-    result = list(s)
-
-    for ch in s:
-        if escape:
-            escape = False
-            continue
-        if ch == "\\" and in_str:
-            escape = True
-            continue
-        if ch == '"':
-            in_str = not in_str
-            continue
-        if not in_str:
-            if ch in "{[": opens.append(ch)
-            elif ch in "}]": opens.pop() if opens else None
-
-    # If we ended mid-string, close it
-    if in_str:
-        result.append('"')
-
-    # Close any open arrays / objects in reverse order
-    closers = {"{": "}", "[": "]"}
-    for opener in reversed(opens):
-        result.append(closers[opener])
-
-    return "".join(result)
-
-
-# ─── Main function ────────────────────────────────────────────────────────────
 
 def generate_cv_content(
     profile:          dict,
@@ -93,22 +16,13 @@ def generate_cv_content(
     job_title:        str,
     gemini_api_key:   str,
 ) -> dict:
-    """
-    Calls Gemini 2.5 Flash to:
-      1. Extract ATS keywords from the JD
-      2. Select ONLY relevant skills / projects / experience from the profile
-      3. Rewrite bullet points (action verb + metric + impact)
-      4. Tailor tone to the company's culture (from research)
-      5. Return structured JSON
-    """
     client = genai.Client(api_key=gemini_api_key)
 
     profile_json  = json.dumps(profile,          indent=2)
     research_json = json.dumps(company_research, indent=2)
 
     prompt = f"""You are a senior technical recruiter and ATS optimisation expert.
-
-Your job is to create a perfectly tailored, ATS-friendly resume for the candidate below.
+Create a perfectly tailored, ATS-friendly resume for the candidate below.
 
 ════════════════════════════════
 CANDIDATE PROFILE
@@ -118,8 +32,8 @@ CANDIDATE PROFILE
 ════════════════════════════════
 TARGET ROLE
 ════════════════════════════════
-Job Title  : {job_title}
-Company    : {company_name}
+Job Title  : {job_title or "Not specified"}
+Company    : {company_name or "Not specified"}
 
 ════════════════════════════════
 JOB DESCRIPTION
@@ -134,34 +48,18 @@ COMPANY RESEARCH
 ════════════════════════════════
 INSTRUCTIONS
 ════════════════════════════════
-1. **Keyword extraction** — identify every required and preferred skill, tool,
-   technology, and soft skill mentioned in the JD.
+1. Extract every required/preferred skill, tool, technology, and soft skill from the JD.
+2. Include a skill ONLY if it genuinely appears in the candidate profile AND is JD-relevant. Never invent skills.
+3. Select 2–4 projects that best match JD requirements. Discard unrelated ones.
+4. Rewrite every experience bullet: [Action verb] + [specific task] + [quantified impact]. Weave in JD keywords naturally.
+5. Match tone/vocabulary to the company culture from research data.
+6. Rate match score 0–100 realistically.
+7. Write a 2-sentence summary opening with the target job title highlighting top 2 strengths.
 
-2. **Skill selection** — include a skill ONLY if it genuinely appears in the
-   candidate's profile AND is relevant to the JD. Never invent skills.
-
-3. **Project selection** — pick 2–4 projects that best demonstrate the JD
-   requirements. Discard unrelated projects entirely.
-
-4. **Experience rewriting** — rewrite every bullet point using the formula:
-   [Strong action verb] + [specific task] + [quantified outcome/impact].
-   Naturally weave in JD keywords. Keep each bullet ≤ 2 lines.
-
-5. **Company tone matching** — use vocabulary and priorities that match the
-   company's culture (from the research data above).
-
-6. **Match score** — rate how well the profile fits this specific JD (0–100).
-
-7. **Professional summary** — write a 2-sentence ATS-friendly summary that
-   opens with the target job title and highlights the top 2 strengths.
-
-RULES:
-- NEVER invent experience, metrics, or skills not in the profile.
-- Keep bullets truthful — enhance wording and emphasis, do not fabricate.
-- Match score must be realistic: low if profile is a poor fit.
+RULES: Never invent metrics or skills. Enhance wording only — do not fabricate.
 
 ════════════════════════════════
-OUTPUT FORMAT  (return ONLY valid JSON, no markdown, no commentary)
+REQUIRED JSON SCHEMA
 ════════════════════════════════
 {{
   "selected_skills": {{
@@ -172,27 +70,20 @@ OUTPUT FORMAT  (return ONLY valid JSON, no markdown, no commentary)
   }},
   "selected_projects": [
     {{
-      "name":        "",
-      "description": "",
-      "tech":        [],
-      "link":        "",
-      "date":        "",
-      "bullets":     []
+      "name": "", "description": "", "tech": [],
+      "link": "", "date": "", "bullets": []
     }}
   ],
   "selected_experience": [
     {{
-      "company":  "",
-      "role":     "",
-      "date":     "",
-      "location": "",
-      "bullets":  []
+      "company": "", "role": "", "date": "",
+      "location": "", "bullets": []
     }}
   ],
-  "professional_summary":  "",
-  "ats_keywords_used":     [],
-  "match_score":           0,
-  "optimization_notes":    ""
+  "professional_summary": "",
+  "ats_keywords_used":    [],
+  "match_score":          0,
+  "optimization_notes":   ""
 }}"""
 
     response = client.models.generate_content(
@@ -200,7 +91,15 @@ OUTPUT FORMAT  (return ONLY valid JSON, no markdown, no commentary)
         contents=prompt,
         config=types.GenerateContentConfig(
             temperature=0.4,
-            max_output_tokens=4096,
+            max_output_tokens=16384,
+            response_mime_type="application/json",   # ← guarantees valid JSON
         ),
     )
-    return _parse_json(response.text)
+
+    try:
+        return json.loads(response.text)
+    except json.JSONDecodeError as e:
+        raise ValueError(
+            f"Gemini returned invalid JSON.\nError: {e}\n"
+            f"Raw (first 500 chars):\n{response.text[:500]}"
+        )

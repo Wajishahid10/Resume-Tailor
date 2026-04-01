@@ -188,11 +188,9 @@ with tab1:
 
     with col_l:
         st.subheader("🏢 Job Info")
-        job_title    = st.text_input("Job Title *", placeholder="e.g. Senior Software Engineer",
-                            value=st.session_state.last_job_title)
-        if job_title == '' or not job_title:
-            job_title = 'Senior Salesforce Developer'
-        company_name = st.text_input("Company Name *", placeholder="e.g. Google",
+        job_title    = st.text_input("Job Title", placeholder="e.g. Senior Software Engineer",
+                            value=st.session_state.last_job_title or "Senior Salesforce Developer")
+        company_name = st.text_input("Company Name (optional)", placeholder="e.g. Google",
                             value=st.session_state.last_company)
 
     with col_r:
@@ -212,7 +210,9 @@ with tab1:
     with rc2:
         research_btn = st.button(
             "🔍 Research",
-            use_container_width=True
+            use_container_width=True,
+            disabled=not company_name,
+            help="Enter a company name above to enable research",
         )
 
     if research_btn and company_name:
@@ -253,7 +253,6 @@ with tab1:
     # ── Generate ──────────────────────────────────────────────────────────────
     missing = []
     if not job_title:        missing.append("Job Title")
-    if not company_name:     missing.append("Company Name")
     if not job_description:  missing.append("Job Description")
     if not st.session_state.profile: missing.append("Profile (upload CV or set secrets)")
 
