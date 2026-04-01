@@ -21,8 +21,11 @@ def generate_cv_content(
     profile_json  = json.dumps(profile,          indent=2)
     research_json = json.dumps(company_research, indent=2)
 
-    prompt = f"""You are a senior technical recruiter and ATS optimisation expert.
-Create a perfectly tailored, ATS-friendly resume for the candidate below.
+    # Calculate total years of experience from profile
+    prompt = f"""You are a senior technical recruiter and ATS optimisation expert with deep knowledge of
+Applicant Tracking Systems (ATS), resume parsing, and keyword optimisation.
+
+Your task: produce a perfectly tailored, ATS-friendly resume for the candidate below.
 
 ════════════════════════════════
 CANDIDATE PROFILE
@@ -46,42 +49,131 @@ COMPANY RESEARCH
 {research_json}
 
 ════════════════════════════════
-INSTRUCTIONS
+STRICT INSTRUCTIONS
 ════════════════════════════════
-1. Extract every required/preferred skill, tool, technology, and soft skill from the JD.
-2. Include a skill ONLY if it genuinely appears in the candidate profile AND is JD-relevant. Never invent skills.
-3. Select 2–4 projects that best match JD requirements. Discard unrelated ones.
-4. Rewrite every experience bullet: [Action verb] + [specific task] + [quantified impact]. Weave in JD keywords naturally.
-5. Match tone/vocabulary to the company culture from research data.
-6. Rate match score 0–100 realistically.
-7. Write a 2-sentence summary opening with the target job title highlighting top 2 strengths.
-8. Add Trailhead in the header instead of github for Salesforce Jobs.
-9. According to company location and job location, add remote or open to reloation in the heading.
-10. Only add JD RELEVENT Skill, Technology and Coursework.
-11. Keep it concise enough to fit on a single page.
 
-RULES: Never invent metrics or skills. Enhance wording only — do not fabricate.
+── 1. ATS PARSEABILITY (Critical — target 90%+ parse rate) ──
+- Use ONLY plain ASCII characters. No Unicode dashes (–), bullets (•), arrows, or special symbols.
+- Use standard section names exactly: "Experience", "Education", "Projects", "Technical Skills".
+- Do NOT use tables, columns, text boxes, or nested structures in bullet text.
+- Keep bullet points as clean single sentences — no semicolons splitting two ideas into one bullet.
+- Spell out all abbreviations on first use: e.g. "Lightning Web Components (LWC)".
+
+── 2. PROFESSIONAL SUMMARY ──
+- Open with the EXACT job title from the JD (not a variation).
+- State total years of experience accurately by summing all roles in the profile.
+- Mention the top 2-3 hard skills most prominent in the JD.
+- Max 3 sentences. No fluff. No "passionate about" or "keen interest in".
+- If the JD mentions preferred industries (e.g. Web3, blockchain), only include if
+  there is genuine evidence in the profile — otherwise omit entirely.
+
+── 3. EXPERIENCE BULLETS — STRICT RULES ──
+VERB VARIETY: Never repeat the same opening verb across bullets within the same role.
+Use a diverse mix from this list (pick the most accurate for each action):
+  Architected, Engineered, Streamlined, Spearheaded, Accelerated, Automated,
+  Reduced, Eliminated, Delivered, Launched, Refactored, Optimised, Consolidated,
+  Migrated, Integrated, Established, Standardised, Mentored, Coordinated,
+  Translated, Configured, Deployed, Authored, Overhauled, Benchmarked,
+  Collaborated, Scoped, Triaged, Resolved, Enabled, Expanded, Drove
+
+QUANTIFICATION: Every bullet MUST contain at least one of:
+  - A percentage improvement (e.g. "reducing deployment time by 35%")
+  - A count (e.g. "across 4 sandboxes", "serving 12 enterprise clients")
+  - A time saving (e.g. "cutting manual effort from 3 hours to 20 minutes")
+  - A scale indicator (e.g. "processing 500k+ records per batch job")
+  If the profile bullet has no metric, infer a REALISTIC one based on context
+  (e.g. code review → "reducing post-deployment defects by ~20%"). Never fabricate
+  implausible numbers. Use "~" prefix for estimated figures.
+
+MULTI-ORG / GLOBAL FRAMING: Where the profile mentions global teams, cross-org
+  work, or multi-region projects, explicitly frame it as multi-org or cross-org
+  Salesforce architecture experience — this matches common enterprise JD language.
+
+JD-SPECIFIC TOOLS: If the JD mentions tools the candidate has NOT used but has
+  a close equivalent in their profile, surface the equivalent prominently and note
+  transferability. Example: JD mentions Workato → candidate has Zapier/REST API
+  integrations → write bullet to highlight integration automation expertise.
+
+── 4. SKILL SELECTION & CATEGORISATION ──
+- Include a skill ONLY if present in the candidate profile AND relevant to the JD.
+- Never invent skills.
+- If the JD mentions specific tools the candidate hasn't used but has a close
+  equivalent, surface the equivalent prominently in the relevant category.
+- Detect the role domain from the job title and description, then return skills
+  grouped into the most appropriate named categories for that domain.
+
+For SALESFORCE roles, use these exact category keys:
+  "sf_clouds", "sf_ai_automation", "sf_features", "sf_development",
+  "sf_apis_integrations", "sf_cicd_deployment", "sf_data_security",
+  "sf_developer_tools", "sf_languages", "sf_methodologies"
+
+For NON-SALESFORCE roles, use these generic keys:
+  "languages", "frameworks", "tools", "other"
+
+Return whichever set of keys fits the role — never mix both sets.
+Only include a category if it has at least one item.
+
+── 5. PROJECT SELECTION ──
+- Select 2-3 projects maximum that best match JD requirements.
+- Rewrite project bullets using the same verb variety and quantification rules above.
+- Drop any project with zero relevance to the JD.
+
+── 6. GRAMMAR & SPELLING ──
+- Proofread every sentence. Fix all spelling and grammar errors.
+- Use consistent tense: past tense for all completed roles, present for current role.
+- Do not start two consecutive bullets with the same word.
+- Remove filler phrases: "in order to", "as well as", "a wide range of", "various".
+- Keep it concise enough to fit on a single page.
+
+── 7. MATCH SCORE ──
+- Score 0-100 based on: keyword overlap, experience level match, tool match,
+  industry alignment. Be realistic — penalise hard for missing required years
+  or mandatory certifications.
+
+── 8. CERTIFICATIONS ──
+- Extract any certifications mentioned in the profile and return them in the
+  "certifications" array. Each entry: {{"name": "", "issuer": "", "date": ""}}.
 
 ════════════════════════════════
-REQUIRED JSON SCHEMA
+OUTPUT JSON SCHEMA
 ════════════════════════════════
 {{
   "selected_skills": {{
-    "languages":  [],
-    "frameworks": [],
-    "tools":      [],
-    "other":      []
+    "sf_clouds":            [],
+    "sf_ai_automation":     [],
+    "sf_features":          [],
+    "sf_development":       [],
+    "sf_apis_integrations": [],
+    "sf_cicd_deployment":   [],
+    "sf_data_security":     [],
+    "sf_developer_tools":   [],
+    "sf_languages":         [],
+    "sf_methodologies":     []
   }},
   "selected_projects": [
     {{
-      "name": "", "description": "", "tech": [],
-      "link": "", "date": "", "bullets": []
+      "name":        "",
+      "description": "",
+      "tech":        [],
+      "link":        "",
+      "date":        "",
+      "bullets":     []
     }}
   ],
   "selected_experience": [
     {{
-      "company": "", "role": "", "date": "",
-      "location": "", "bullets": []
+      "company":  "",
+      "role":     "",
+      "date":     "",
+      "location": "",
+      "bullets":  []
+    }}
+  ],
+  "certifications": [
+    {{
+      "name":   "",
+      "issuer": "",
+      "date":   ""
     }}
   ],
   "professional_summary": "",

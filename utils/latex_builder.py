@@ -143,7 +143,13 @@ def _build_projects(projects: list) -> str:
         if not bullets and proj.get("description"):
             bullets = [proj["description"]]
 
-        heading = f"\\textbf{{{name}}} $|$ \\emph{{{tech}}}"
+        # Limit tech tags to avoid line overflow — show top 5 only
+        tech_items = proj.get("tech", [])
+        tech_short = ", ".join(esc(t) for t in tech_items[:5])
+        if len(tech_items) > 5:
+            tech_short += f" +{len(tech_items) - 5} more"
+
+        heading = f"\\textbf{{{name}}} $|$ \\emph{{{tech_short}}}"
         if link:
             safe_link = esc_url(link)
             if not safe_link.startswith("http"):
@@ -162,15 +168,55 @@ def _build_projects(projects: list) -> str:
     return "\n".join(lines)
 
 
+def _build_certifications(certifications: list) -> str:
+    if not certifications:
+        return ""
+    lines = ["  \\resumeSubHeadingListStart"]
+    for cert in certifications:
+        name   = esc(cert.get("name",   ""))
+        issuer = esc(cert.get("issuer", ""))
+        date   = esc(cert.get("date",   ""))
+        lines.append(
+            f"    \\resumeSubheading\n"
+            f"      {{{name}}}{{{date}}}\n"
+            f"      {{{issuer}}}{{}}"
+        )
+    lines.append("  \\resumeSubHeadingListEnd")
+    return "\n".join(lines)
+
+
+# ─── Skills label maps ───────────────────────────────────────────────────────
+
+# Salesforce-specific category labels
+_SF_SKILL_LABELS = {
+    "sf_clouds":            "Salesforce Clouds",
+    "sf_ai_automation":     "AI \\& Automation",
+    "sf_features":          "Salesforce Features",
+    "sf_development":       "Development",
+    "sf_apis_integrations": "APIs \\& Integrations",
+    "sf_cicd_deployment":   "CI/CD \\& Deployment",
+    "sf_data_security":     "Data \\& Security",
+    "sf_developer_tools":   "Developer Tools",
+    "sf_languages":         "Languages",
+    "sf_methodologies":     "Methodologies",
+}
+
+# Generic fallback labels
+_GENERIC_SKILL_LABELS = {
+    "languages":  "Languages",
+    "frameworks": "Frameworks",
+    "tools":      "Developer Tools",
+    "other":      "Other",
+}
+
+
 def _build_skills(skills: dict) -> str:
-    mapping = {
-        "languages":  "Languages",
-        "frameworks": "Frameworks",
-        "tools":      "Developer Tools",
-        "other":      "Other",
-    }
+    # Detect which label map to use based on keys present
+    is_sf = any(k in skills for k in _SF_SKILL_LABELS)
+    label_map = _SF_SKILL_LABELS if is_sf else _GENERIC_SKILL_LABELS
+
     lines = []
-    for key, label in mapping.items():
+    for key, label in label_map.items():
         items = skills.get(key, [])
         if items:
             joined = ", ".join(esc(s) for s in items)
@@ -280,10 +326,11 @@ def build_latex(
     skills      = generated.get("selected_skills")     or profile.get("skills",     {})
     summary     = generated.get("professional_summary", "")
 
-    edu_tex  = _build_education(profile)
-    exp_tex  = _build_experience(experiences)
-    proj_tex = _build_projects(projects)
-    sk_tex   = _build_skills(skills)
+    edu_tex   = _build_education(profile)
+    exp_tex   = _build_experience(experiences)
+    proj_tex  = _build_projects(projects)
+    sk_tex    = _build_skills(skills)
+    cert_tex  = _build_certifications(generated.get("certifications", []))
 
     summary_block = ""
     if summary:
@@ -323,7 +370,13 @@ def build_latex(
         "    \\resumeSubHeadingListStart\n"
         f"{proj_tex}\n"
         "    \\resumeSubHeadingListEnd\n\n"
-        "%----------- TECHNICAL SKILLS -----------\n"
+        + (
+            "%----------- CERTIFICATIONS -----------\n"
+            "\\section{Certifications}\n"
+            f"{cert_tex}\n\n"
+            if cert_tex else ""
+        )
+        +
         "\\section{Technical Skills}\n"
         " \\begin{itemize}[leftmargin=0.15in, label={}]\n"
         "    \\small{\\item{\n"

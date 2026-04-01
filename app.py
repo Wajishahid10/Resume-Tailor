@@ -62,7 +62,7 @@ def _to_plain(obj):
 def load_profile_from_secrets() -> dict:
     """Load and normalise the [profile] block from secrets.toml."""
     try:
-        raw = st.secrets["profile"]
+        raw     = st.secrets["profile"]
         profile = _to_plain(raw)
 
         # Ensure lists for skills sub-keys
@@ -172,7 +172,7 @@ with st.sidebar:
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 st.title("🎯 ATS-Optimized CV Builder")
-st.caption("Google Gemini · Jake's Resume (LaTeX) · Single-user")
+st.caption("Google Gemini · DuckDuckGo · Jake's Resume (LaTeX) · Single-user")
 
 tab1, tab2, tab3 = st.tabs(["📝 Job Details", "⚙️ CV Preview", "📥 Download"])
 
@@ -339,14 +339,23 @@ with tab2:
         c1, c2 = st.columns(2)
         with c1:
             st.subheader("🛠 Selected Skills")
+            _SF_LABELS = {
+                "sf_clouds": "Salesforce Clouds", "sf_ai_automation": "AI & Automation",
+                "sf_features": "Salesforce Features", "sf_development": "Development",
+                "sf_apis_integrations": "APIs & Integrations", "sf_cicd_deployment": "CI/CD & Deployment",
+                "sf_data_security": "Data & Security", "sf_developer_tools": "Developer Tools",
+                "sf_languages": "Languages", "sf_methodologies": "Methodologies",
+                "languages": "Languages", "frameworks": "Frameworks",
+                "tools": "Developer Tools", "other": "Other",
+            }
             for cat, items in gen.get("selected_skills", {}).items():
                 if items:
-                    st.markdown(f"**{cat.title()}**: {', '.join(items)}")
+                    label = _SF_LABELS.get(cat, cat.replace("_", " ").title())
+                    st.markdown(f"**{label}**: {', '.join(items)}")
 
         with c2:
             st.subheader("💡 Optimisation Notes")
             st.info(gen.get("optimization_notes", "—"))
-
             summary = gen.get("professional_summary", "")
             if summary:
                 st.subheader("📝 Professional Summary")
