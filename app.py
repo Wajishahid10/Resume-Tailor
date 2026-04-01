@@ -105,7 +105,7 @@ defaults = {
     "company_research": None,
     "last_job_title":   "Senior Salesforce Developer",
     "last_company":     "",
-    "last_location":    "Lahore, Pakistan",
+    "last_location":    "Remote",
 }
 for k, v in defaults.items():
     if k not in st.session_state:
@@ -198,7 +198,7 @@ with tab1:
         job_location = st.text_input(
             "Job Location (optional)",
             placeholder="e.g. Remote / New York, NY / London, UK",
-            value=st.session_state.last_location or "Lahore, Pakistan",
+            value=st.session_state.last_location or "Open to Relocation",
         )
 
     with col_r:
