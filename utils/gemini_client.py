@@ -57,7 +57,8 @@ INSTRUCTIONS
 7. Write a 2-sentence summary opening with the target job title highlighting top 2 strengths.
 8. Add Trailhead in the header instead of github for Salesforce Jobs.
 9. According to company location and job location, add remote or open to reloation in the heading.
-10. Keep it concise enough to fit on a single page.
+10. Only add JD RELEVENT Skill, Technology and Coursework.
+11. Keep it concise enough to fit on a single page.
 
 RULES: Never invent metrics or skills. Enhance wording only — do not fabricate.
 

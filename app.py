@@ -85,9 +85,8 @@ def load_profile_from_secrets() -> dict:
         return {}
 
 
-def get_gemini_key():
-    gemini  = st.secrets.get("api_keys", {}).get("gemini",  "")
-    return gemini
+def get_gemini_key() -> str:
+    return st.secrets.get("api_keys", {}).get("gemini", "")
 
 
 def score_color(score: int) -> str:
@@ -104,9 +103,9 @@ defaults = {
     "latex_source":     None,
     "pdf_bytes":        None,
     "company_research": None,
-    "research_done": False,
-    "last_job_title":   "",
+    "last_job_title":   "Senior Salesforce Developer",
     "last_company":     "",
+    "last_location":    "Lahore, Pakistan",
 }
 for k, v in defaults.items():
     if k not in st.session_state:
@@ -125,7 +124,7 @@ with st.sidebar:
 
     if profile:
         st.success(f"**{profile.get('name', 'Loaded')}**")
-        st.caption(f"{profile.get('email','')} · {profile.get('location','')}")
+        st.caption(f"{profile.get('email', '')} · {profile.get('location', '')}")
 
         with st.expander("🛠 Skills"):
             for cat, items in profile.get("skills", {}).items():
@@ -134,7 +133,7 @@ with st.sidebar:
 
         with st.expander(f"🚀 Projects ({len(profile.get('projects', []))})"):
             for p in profile.get("projects", []):
-                st.markdown(f"- **{p['name']}** — `{', '.join(p.get('tech',[]))}`")
+                st.markdown(f"- **{p['name']}** — `{', '.join(p.get('tech', []))}`")
 
         with st.expander(f"💼 Experience ({len(profile.get('experience', []))})"):
             for e in profile.get("experience", []):
@@ -157,10 +156,8 @@ with st.sidebar:
                     parsed = parse_cv_pdf(uploaded, gemini_key)
                     st.session_state.profile = parsed
                     st.success("Profile updated for this session!")
-
                     with st.expander("📋 Extracted JSON — copy to secrets.toml"):
                         st.json(parsed)
-
                     st.rerun()
                 except Exception as err:
                     st.error(f"Parsing failed: {err}")
@@ -188,72 +185,36 @@ with tab1:
 
     with col_l:
         st.subheader("🏢 Job Info")
-        job_title    = st.text_input("Job Title", placeholder="e.g. Senior Software Engineer",
-                            value=st.session_state.last_job_title or "Senior Salesforce Developer")
-        company_name = st.text_input("Company Name (optional)", placeholder="e.g. Google",
-                            value=st.session_state.last_company)
+        job_title = st.text_input(
+            "Job Title",
+            placeholder="e.g. Senior Software Engineer",
+            value=st.session_state.last_job_title or "Senior Salesforce Developer",
+        )
+        company_name = st.text_input(
+            "Company Name (optional)",
+            placeholder="e.g. Google",
+            value=st.session_state.last_company,
+        )
+        job_location = st.text_input(
+            "Job Location (optional)",
+            placeholder="e.g. Remote / New York, NY / London, UK",
+            value=st.session_state.last_location or "Lahore, Pakistan",
+        )
 
     with col_r:
         st.subheader("📋 Job Description")
         job_description = st.text_area(
             "Paste the full JD here *",
-            height=220,
+            height=260,
             placeholder="Copy and paste the complete job description…",
         )
 
     st.divider()
 
-    # ── Company Research ──────────────────────────────────────────────────────
-    rc1, rc2 = st.columns([3, 1])
-    with rc1:
-        st.subheader("🔍 Company Research")
-    with rc2:
-        research_btn = st.button(
-            "🔍 Research",
-            use_container_width=True,
-            disabled=not company_name,
-            help="Enter a company name above to enable research",
-        )
-
-    if research_btn and company_name:
-        with st.spinner(f"Researching {company_name} via DuckDuckGo…"):
-            try:
-                st.session_state.company_research = research_company(
-                    company_name, job_title=job_title
-                )
-                st.session_state.research_done = True
-                st.session_state.last_company   = company_name
-                st.session_state.last_job_title = job_title
-            except Exception as err:
-                st.error(f"Research error: {err}")
-
-    if st.session_state.research_done and st.session_state.company_research:
-        res = st.session_state.company_research
-        kg  = res.get("knowledge_graph", {})
-
-        if kg.get("description"):
-            st.info(f"**{company_name}** — {kg['description']}")
-
-        col_g, col_t, col_n = st.columns(3)
-        panels = [
-            (col_g, "🏢 Overview",          res.get("general", [])),
-            (col_t, "💻 Tech / Engineering", res.get("tech",    [])),
-            (col_n, "📰 Recent News",        res.get("news",    [])),
-        ]
-        for col, title, snippets in panels:
-            with col:
-                st.markdown(f"**{title}**")
-                for s in snippets[:2]:
-                    with st.expander(s.get("title", "")[:55]):
-                        st.write(s.get("snippet", "—"))
-                        st.caption(s.get("link", ""))
-
-    st.divider()
-
     # ── Generate ──────────────────────────────────────────────────────────────
     missing = []
-    if not job_title:        missing.append("Job Title")
-    if not job_description:  missing.append("Job Description")
+    if not job_title:       missing.append("Job Title")
+    if not job_description: missing.append("Job Description")
     if not st.session_state.profile: missing.append("Profile (upload CV or set secrets)")
 
     if missing:
@@ -271,17 +232,21 @@ with tab1:
         if not gemini_key:
             st.error("Gemini API key missing in secrets.")
         else:
-            bar = st.progress(0)
+            bar    = st.progress(0)
             status = st.empty()
 
             try:
+                # Step 1 — Company research (skipped if no company name)
                 if company_name:
                     status.info("🔍 Step 1/4 — Researching company via DuckDuckGo…")
                     bar.progress(10)
                     st.session_state.company_research = research_company(
                         company_name, job_title=job_title
                     )
+                else:
+                    bar.progress(10)
 
+                # Step 2 — Gemini CV generation
                 status.info("🤖 Step 2/4 — Analysing JD & selecting relevant content…")
                 bar.progress(30)
 
@@ -293,10 +258,12 @@ with tab1:
                     job_title=job_title,
                     gemini_api_key=gemini_key,
                 )
-                st.session_state.generated    = generated
+                st.session_state.generated      = generated
                 st.session_state.last_job_title = job_title
                 st.session_state.last_company   = company_name
+                st.session_state.last_location  = job_location
 
+                # Step 3 — Build LaTeX
                 status.info("🔧 Step 3/4 — Building LaTeX document…")
                 bar.progress(65)
 
@@ -305,9 +272,11 @@ with tab1:
                     generated=generated,
                     job_title=job_title,
                     company_name=company_name,
+                    job_location=job_location,
                 )
                 st.session_state.latex_source = latex_src
 
+                # Step 4 — Compile PDF
                 status.info("⚙️ Step 4/4 — Compiling PDF with pdflatex…")
                 bar.progress(85)
 
@@ -317,21 +286,19 @@ with tab1:
                 bar.progress(100)
                 score = generated.get("match_score", 0)
                 cls   = score_color(score)
-                status.success(
-                    f"✅ Done! ATS Match Score: "
-                    f"<span class='{cls}'>{score}/100</span>  —  "
-                    f"switch to **CV Preview** or **Download** tab.",
-                    icon=None,
-                )
+                status.empty()
                 st.markdown(
-                    f"✅ Done! ATS Match Score: "
-                    f"<span class='{cls}'>{score}/100</span>",
+                    f"✅ Done! ATS Match Score: <span class='{cls}'>{score}/100</span>"
+                    f" — switch to **CV Preview** or **Download** tab.",
                     unsafe_allow_html=True,
                 )
 
+            except EnvironmentError as err:
+                bar.empty(); status.empty()
+                st.error("⚠️ LaTeX not installed")
+                st.code(str(err), language="text")
             except Exception as err:
-                bar.empty()
-                status.empty()
+                bar.empty(); status.empty()
                 st.error(f"❌ Generation failed: {err}")
                 with st.expander("Error details"):
                     st.exception(err)
@@ -349,10 +316,10 @@ with tab2:
 
         # ── Score row ─────────────────────────────────────────────────────────
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("ATS Match Score", f"{score}/100")
-        m2.metric("Keywords Used",   len(gen.get("ats_keywords_used", [])))
-        m3.metric("Projects Selected", len(gen.get("selected_projects", [])))
-        m4.metric("Exp. Bullets",     sum(
+        m1.metric("ATS Match Score",    f"{score}/100")
+        m2.metric("Keywords Used",      len(gen.get("ats_keywords_used", [])))
+        m3.metric("Projects Selected",  len(gen.get("selected_projects", [])))
+        m4.metric("Exp. Bullets",       sum(
             len(e.get("bullets", [])) for e in gen.get("selected_experience", [])
         ))
 
@@ -370,7 +337,6 @@ with tab2:
 
         # ── Skills + Notes ────────────────────────────────────────────────────
         c1, c2 = st.columns(2)
-
         with c1:
             st.subheader("🛠 Selected Skills")
             for cat, items in gen.get("selected_skills", {}).items():
@@ -393,15 +359,18 @@ with tab2:
         if not gen.get("selected_projects"):
             st.caption("No projects selected for this role.")
         for proj in gen.get("selected_projects", []):
-            with st.expander(f"**{proj.get('name')}** — {', '.join(proj.get('tech', []))}  `{proj.get('date','')}`"):
+            with st.expander(
+                f"**{proj.get('name')}** — {', '.join(proj.get('tech', []))}  `{proj.get('date', '')}`"
+            ):
                 for b in proj.get("bullets", [proj.get("description", "")]):
                     st.markdown(f"• {b}")
 
         # ── Experience ────────────────────────────────────────────────────────
         st.subheader("💼 Tailored Experience Bullets")
         for exp in gen.get("selected_experience", []):
-            label = f"**{exp.get('role')}** @ {exp.get('company')}  `{exp.get('date','')}`"
-            with st.expander(label):
+            with st.expander(
+                f"**{exp.get('role')}** @ {exp.get('company')}  `{exp.get('date', '')}`"
+            ):
                 for b in exp.get("bullets", []):
                     st.markdown(f"• {b}")
 
@@ -434,11 +403,10 @@ with tab3:
 
         safe_name = st.session_state.profile.get("name", "Resume").replace(" ", "_")
         date_str  = datetime.now().strftime("%Y%m%d")
-        company_s = st.session_state.last_company.replace(" ", "_")
+        company_s = (st.session_state.last_company or "General").replace(" ", "_")
         base_name = f"CV_{safe_name}_{company_s}_{date_str}"
 
         dl1, dl2 = st.columns(2)
-
         with dl1:
             st.download_button(
                 label="📥 Download PDF Resume",
@@ -448,7 +416,6 @@ with tab3:
                 type="primary",
                 use_container_width=True,
             )
-
         with dl2:
             st.download_button(
                 label="📄 Download LaTeX Source (.tex)",
@@ -463,6 +430,5 @@ with tab3:
             "💡 Open the `.tex` file on [Overleaf](https://overleaf.com) to manually "
             "fine-tune formatting, fonts, or layout before your final submission."
         )
-
         with st.expander("📊 Full Generation Report"):
             st.json(gen)

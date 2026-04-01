@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 import os
 import re
+import shutil
 from typing import Optional
 
 
@@ -218,6 +219,7 @@ def build_latex(
     generated:    dict,
     job_title:    str,
     company_name: str,
+    job_location: str = "",
 ) -> str:
     """
     Assemble a complete Jake's-Resume LaTeX document.
@@ -225,11 +227,18 @@ def build_latex(
     Uses AI-selected experience / projects / skills from `generated`,
     falling back to the raw profile values if a section is empty.
     """
-    name     = esc(profile.get("name", "Your Name"))
-    phone    = esc(profile.get("phone", ""))
-    email    = profile.get("email", "")
-    linkedin = profile.get("linkedin", "").strip().lstrip("https://").lstrip("http://")
-    github   = profile.get("github",   "").strip().lstrip("https://").lstrip("http://")
+    name      = esc(profile.get("name", "Your Name"))
+    phone     = esc(profile.get("phone", ""))
+    email     = profile.get("email", "")
+    linkedin  = profile.get("linkedin",  "").strip().lstrip("https://").lstrip("http://")
+    github    = profile.get("github",    "").strip().lstrip("https://").lstrip("http://")
+    trailhead = profile.get("trailhead", "").strip().lstrip("https://").lstrip("http://")
+
+    # Trailhead for Salesforce roles, GitHub otherwise
+    profile_link      = trailhead if (_is_salesforce_role(job_title) and trailhead) else github
+    profile_link_label = "Trailhead" if (_is_salesforce_role(job_title) and trailhead) else "GitHub"
+
+    display_location = esc(_resolve_location(profile, job_location))
 
     # Prefer generated content; fall back to raw profile
     experiences = generated.get("selected_experience") or profile.get("experience", [])
@@ -261,8 +270,9 @@ def build_latex(
         f"    \\small {phone} $|$\n"
         f"    \\href{{mailto:{email}}}{{\\underline{{{email}}}}} $|$\n"
         f"    \\href{{https://{esc_url(linkedin)}}}{{\\underline{{{esc(linkedin)}}}}}\n"
-        + (f"    $|$ \\href{{https://{esc_url(github)}}}{{\\underline{{{esc(github)}}}}}\n"
-           if github else "")
+        + (f"    $|$ \\href{{https://{esc_url(profile_link)}}}{{\\underline{{{profile_link_label}}}}}\n"
+           if profile_link else "")
+        + f"    $|$ {display_location}\n"
         + "\\end{center}\n\n"
         + summary_block
         + "%----------- EDUCATION -----------\n"
@@ -294,12 +304,58 @@ def build_latex(
 
 # ─── Compilation ──────────────────────────────────────────────────────────────
 
-def compile_latex_to_pdf(latex_content: str, timeout: int = 90) -> bytes:
+def _check_pdflatex():
+    """Raise a clear error if pdflatex is not available in PATH."""
+    if shutil.which("pdflatex") is None:
+        raise EnvironmentError(
+            "pdflatex not found in PATH.\n\n"
+            "── Windows ──\n"
+            "  1. Download and install MiKTeX: https://miktex.org/download\n"
+            "     (tick 'Install missing packages on-the-fly = Yes')\n"
+            "  2. Restart your terminal / Streamlit after install.\n\n"
+            "── macOS ──\n"
+            "  brew install --cask mactex\n\n"
+            "── Linux / Streamlit Cloud ──\n"
+            "  Ensure packages.txt contains: texlive-latex-extra texlive-fonts-recommended"
+        )
+
+
+_SALESFORCE_KEYWORDS = {
+    "salesforce", "sfdc", "apex", "lwc", "lightning",
+    "trailhead", "service cloud", "sales cloud", "cpq",
+}
+
+def _is_salesforce_role(job_title: str) -> bool:
+    t = job_title.lower()
+    return any(kw in t for kw in _SALESFORCE_KEYWORDS)
+
+
+def _resolve_location(profile: dict, job_location: str) -> str:
+    """
+    Returns the right location string for the CV header:
+      - 'Remote'            if job is remote
+      - profile.relocation  if job is in a different city/country
+      - profile.location    otherwise / if job_location is blank
+    """
+    profile_loc = profile.get("location",   "")
+    relocation  = profile.get("relocation", "")
+    jl = (job_location or "").strip().lower()
+
+    if not jl:
+        return profile_loc
+    if "remote" in jl:
+        return "Remote"
+    # Different location → offer relocation text if available
+    if jl not in profile_loc.lower():
+        return relocation or profile_loc
+    return profile_loc
     """
     Write LaTeX to a temp dir, run pdflatex twice, return PDF bytes.
 
     Raises RuntimeError with compiler output on failure.
     """
+    _check_pdflatex()   # fast-fail with a helpful message if not installed
+
     with tempfile.TemporaryDirectory() as tmpdir:
         tex_path = os.path.join(tmpdir, "resume.tex")
         pdf_path = os.path.join(tmpdir, "resume.pdf")
