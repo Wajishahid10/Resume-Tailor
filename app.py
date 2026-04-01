@@ -104,6 +104,7 @@ defaults = {
     "latex_source":     None,
     "pdf_bytes":        None,
     "company_research": None,
+    "research_done": False,
     "last_job_title":   "",
     "last_company":     "",
 }
