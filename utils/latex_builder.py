@@ -135,6 +135,19 @@ def _build_experience(experiences: list) -> str:
     return "\n".join(lines)
 
 
+def _trim_tech(tech_list: list, max_chars: int = 80) -> str:
+    """
+    Join tech items and trim to max_chars at the last clean comma boundary.
+    Gemini already filters to JD-relevant items — this only catches overflow.
+    """
+    full = ", ".join(esc(t) for t in tech_list)
+    if len(full) <= max_chars:
+        return full
+    trimmed = full[:max_chars]
+    cut = trimmed.rfind(",")
+    return trimmed[:cut] if cut > 0 else trimmed
+
+
 def _build_projects(projects: list) -> str:
     """
     Render projects. Tech list comes pre-filtered by Gemini to JD-relevant

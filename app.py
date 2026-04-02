@@ -7,6 +7,7 @@ Single-user · Streamlit Community Cloud
 
 import streamlit as st
 import json
+import hashlib
 from datetime import datetime
 
 from utils.cv_parser import parse_cv_pdf
@@ -21,6 +22,65 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# ─── Password gate ─────────────────────────────────────────────────────────────
+
+def _check_auth() -> bool:
+    """
+    Returns True if the user is authenticated.
+    Persists auth for the device session via st.query_params.
+    Bookmark the URL after login to skip password on return visits.
+    """
+    secret_pw   = st.secrets.get("app", {}).get("password", "")
+    if not secret_pw:
+        return True   # No password set — open access
+
+    # Hash so plain text never sits in session state
+    def _h(s): return hashlib.sha256(s.encode()).hexdigest()[:16]
+    token = _h(secret_pw)
+
+    # Already authenticated this session
+    if st.session_state.get("authenticated"):
+        return True
+
+    # Check URL token (bookmarked authenticated URL)
+    if st.query_params.get("auth") == token:
+        st.session_state.authenticated = True
+        return True
+
+    # Show login form
+    st.markdown("""
+        <style>
+        .login-box {
+            max-width: 360px; margin: 8vh auto; padding: 2rem 2.5rem;
+            background: #fff; border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+        }
+        </style>
+        <div class='login-box'>
+    """, unsafe_allow_html=True)
+
+    with st.container():
+        st.title("🎯 ATS CV Builder")
+        st.caption("Enter your password to continue.")
+        pw_input = st.text_input("Password", type="password", label_visibility="collapsed",
+                                 placeholder="Enter password…")
+        remember = st.checkbox("Remember on this device (saves token to URL)", value=True)
+        if st.button("Unlock", type="primary", use_container_width=True):
+            if _h(pw_input) == token:
+                st.session_state.authenticated = True
+                if remember:
+                    st.query_params["auth"] = token
+                st.rerun()
+            else:
+                st.error("Incorrect password.")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+    return False
+
+if not _check_auth():
+    st.stop()
+
 
 # ─── CSS ──────────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -159,6 +219,14 @@ with st.sidebar:
     else:
         st.warning("No profile found in secrets.toml")
 
+    st.divider()
+    st.subheader("⚙️ Output Settings")
+    page_count = st.radio(
+        "CV Length",
+        ["1 Page", "2 Pages"],
+        index=1,
+        horizontal=True,
+    )
     st.divider()
     st.subheader("📤 Override Profile")
     st.caption("Upload a CV to replace your profile **for this session only**.")
