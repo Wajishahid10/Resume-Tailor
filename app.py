@@ -313,7 +313,7 @@ with tab1:
                     job_title=job_title,
                     company_name=company_name,
                     job_location=job_location,
-                    pages=1 if page_count == "1 Page" else 2,
+                    pages=1 if page_count == "1 Page" else 2
                 )
                 st.session_state.latex_source = latex_src
 
