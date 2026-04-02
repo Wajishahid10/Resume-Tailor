@@ -142,6 +142,9 @@ NEVER mix SF keys and generic keys. NEVER invent skills absent from the profile.
 - Select 2-3 projects maximum that best match JD requirements.
 - Rewrite project bullets using the same verb variety and quantification rules above.
 - Drop any project with zero relevance to the JD.
+- For each selected project, include in the "tech" array ONLY the technologies
+  directly relevant to the JD. Omit unrelated tech entirely — the tech line
+  appears in the CV header and must read as targeted keywords, not a full inventory.
 
 ── 6. GRAMMAR & SPELLING ──
 - Proofread every sentence. Fix all spelling and grammar errors.
@@ -151,7 +154,12 @@ NEVER mix SF keys and generic keys. NEVER invent skills absent from the profile.
 - NEVER use third-person ("He", "She", "Muhammad") in the professional summary.
   Write in first-person implied style: "Senior Salesforce Developer with X years..."
 - ABSOLUTELY NO MARKDOWN in any text field. No **bold**, no *italic*, no __underline__,
-  no `backticks`. Plain text only in all bullets, summaries, and descriptions.
+  no backticks. Plain text only in all bullets, summaries, and descriptions.
+- Do NOT use the tilde (~) symbol anywhere. Write all figures as plain numbers
+  without any prefix or suffix symbol. Never write "~25%" — write "25%".
+- Do NOT write vague counts like "2+ products" or "5+ clients". Either state
+  the exact known number ("3 enterprise apps") or drop the count entirely and
+  describe the scope instead ("multiple enterprise apps across 3 product lines").
 - Keep it concise enough to fit on a single page.
 
 ── 7. MATCH SCORE ──
@@ -234,7 +242,9 @@ OUTPUT JSON SCHEMA
 def _strip_markdown(obj):
     """Recursively strip markdown bold/italic markers from all string values."""
     if isinstance(obj, str):
-        obj = obj.replace("**", "").replace("__", "").replace("*", "").replace("`", "")
+        # Strip all markdown and unwanted symbols
+        obj = obj.replace("**", "").replace("__", "").replace("*", "")
+        obj = obj.replace("`", "").replace("~", "")
         return obj
     elif isinstance(obj, list):
         return [_strip_markdown(i) for i in obj]

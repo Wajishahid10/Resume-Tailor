@@ -216,7 +216,7 @@ with tab1:
         st.markdown("**Job Location**")
         loc_choice = st.radio(
             "Job Location",
-            ["Remote", "Lahore, Pakistan", "Custom"],
+            ["Remote", "Lahore, Pakistan", "Pakistan - Open to Relocate", "Custom"],
             index=0,
             horizontal=True,
             label_visibility="collapsed",
@@ -226,7 +226,7 @@ with tab1:
                 "Enter location",
                 placeholder="e.g. New York, NY / London, UK",
                 value=st.session_state.last_location
-                      if st.session_state.last_location not in ("Remote", "Lahore, Pakistan", "")
+                      if st.session_state.last_location not in ("Remote", "Lahore, Pakistan", "Pakistan - Open to Relocate", "")
                       else "",
             )
         else:

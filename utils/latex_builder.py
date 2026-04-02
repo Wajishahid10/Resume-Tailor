@@ -5,9 +5,7 @@ LaTeX builder — Jake's Resume template + pdflatex compilation.
 import subprocess
 import tempfile
 import os
-import re
 import shutil
-from typing import Optional
 
 
 # ─── Character escaping ───────────────────────────────────────────────────────
@@ -41,11 +39,20 @@ def esc_url(url: str) -> str:
     return url.replace("%", r"\%").replace("#", r"\#")
 
 
-# ─── Salesforce detection ─────────────────────────────────────────────────────
+def _strip_prefix(url: str) -> str:
+    """Remove https:// or http:// using startswith — NOT lstrip (which strips chars)."""
+    url = url.strip()
+    for prefix in ("https://", "http://"):
+        if url.startswith(prefix):
+            return url[len(prefix):]
+    return url
+
+
+# ─── Salesforce role detection ────────────────────────────────────────────────
 
 _SALESFORCE_KEYWORDS = {
     "salesforce", "sfdc", "apex", "lwc", "lightning",
-    "trailhead", "service cloud", "sales cloud", "cpq",
+    "trailhead", "service cloud", "sales cloud", "cpq", "force.com",
 }
 
 def _is_salesforce_role(job_title: str) -> bool:
@@ -65,11 +72,10 @@ def _resolve_location(profile: dict, job_location: str) -> str:
     profile_loc = profile.get("location",   "")
     relocation  = profile.get("relocation", "")
     jl = (job_location or "").strip().lower()
-
     if not jl:
         return profile_loc
     if "remote" in jl:
-        return "Remote"
+        return profile.get("remote", "Remote")
     if jl not in profile_loc.lower():
         return relocation or profile_loc
     return profile_loc
@@ -92,7 +98,6 @@ def _build_education(profile: dict) -> str:
             f"      {{{inst}}}{{{loc}}}\n"
             f"      {{{degree}}}{{{date}}}"
         )
-
         extras = []
         if gpa:
             extras.append(f"\\textbf{{GPA}}: {esc(gpa)}")
@@ -106,7 +111,6 @@ def _build_education(profile: dict) -> str:
             for ex in extras:
                 lines.append(f"        \\resumeItem{{{ex}}}")
             lines.append("      \\resumeItemListEnd")
-
     return "\n".join(lines)
 
 
@@ -128,11 +132,14 @@ def _build_experience(experiences: list) -> str:
         for b in bullets:
             lines.append(f"        \\resumeItem{{{esc(b)}}}")
         lines.append("      \\resumeItemListEnd")
-
     return "\n".join(lines)
 
 
 def _build_projects(projects: list) -> str:
+    """
+    Render projects. Tech list comes pre-filtered by Gemini to JD-relevant
+    items only — render all of them, no truncation.
+    """
     lines = []
     for proj in projects:
         name    = esc(proj.get("name", ""))
@@ -143,18 +150,10 @@ def _build_projects(projects: list) -> str:
         if not bullets and proj.get("description"):
             bullets = [proj["description"]]
 
-        # Limit tech tags to avoid line overflow — show top 5 only
-        tech_items = proj.get("tech", [])
-        tech_short = ", ".join(esc(t) for t in tech_items[:5])
-        if len(tech_items) > 5:
-            tech_short += f" +{len(tech_items) - 5} more"
-
-        heading = f"\\textbf{{{name}}} $|$ \\emph{{{tech_short}}}"
+        heading = f"\\textbf{{{name}}} $|$ \\emph{{{tech}}}"
         if link:
-            safe_link = esc_url(link)
-            if not safe_link.startswith("http"):
-                safe_link = "https://" + safe_link
-            heading += f" $|$ \\href{{{safe_link}}}{{\\underline{{repo}}}}"
+            safe_link = esc_url(_strip_prefix(link))
+            heading += f" $|$ \\href{{https://{safe_link}}}{{\\underline{{repo}}}}"
 
         lines.append(
             f"    \\resumeProjectHeading\n"
@@ -164,7 +163,6 @@ def _build_projects(projects: list) -> str:
         for b in bullets:
             lines.append(f"        \\resumeItem{{{esc(b)}}}")
         lines.append("      \\resumeItemListEnd")
-
     return "\n".join(lines)
 
 
@@ -185,7 +183,7 @@ def _build_certifications(certifications: list) -> str:
     return "\n".join(lines)
 
 
-# ─── Skills label maps ───────────────────────────────────────────────────────
+# ─── Skills label maps ────────────────────────────────────────────────────────
 
 # Salesforce-specific category labels
 _SF_SKILL_LABELS = {
@@ -214,7 +212,6 @@ def _build_skills(skills: dict) -> str:
     # Detect which label map to use based on keys present
     is_sf = any(k in skills for k in _SF_SKILL_LABELS)
     label_map = _SF_SKILL_LABELS if is_sf else _GENERIC_SKILL_LABELS
-
     lines = []
     for key, label in label_map.items():
         items = skills.get(key, [])
@@ -224,7 +221,7 @@ def _build_skills(skills: dict) -> str:
     return "\n".join(lines)
 
 
-# ─── Full document ────────────────────────────────────────────────────────────
+# ─── Jake's preamble ──────────────────────────────────────────────────────────
 
 JAKE_PREAMBLE = r"""
 \documentclass[letterpaper,11pt]{article}
@@ -294,6 +291,8 @@ JAKE_PREAMBLE = r"""
 """
 
 
+# ─── Full document ────────────────────────────────────────────────────────────
+
 def build_latex(
     profile:      dict,
     generated:    dict,
@@ -310,27 +309,26 @@ def build_latex(
     name      = esc(profile.get("name", "Your Name"))
     phone     = esc(profile.get("phone", ""))
     email     = profile.get("email", "")
-    linkedin  = profile.get("linkedin",  "").strip().lstrip("https://").lstrip("http://")
-    github    = profile.get("github",    "").strip().lstrip("https://").lstrip("http://")
-    trailhead = profile.get("trailhead", "").strip().lstrip("https://").lstrip("http://")
+    linkedin  = _strip_prefix(profile.get("linkedin",  "").strip())
+    github    = _strip_prefix(profile.get("github",    "").strip())
+    trailhead = _strip_prefix(profile.get("trailhead", "").strip())
 
     # Trailhead for Salesforce roles, GitHub otherwise
     profile_link       = trailhead if (_is_salesforce_role(job_title) and trailhead) else github
     profile_link_label = "Trailhead" if (_is_salesforce_role(job_title) and trailhead) else "GitHub"
+    display_location   = esc(_resolve_location(profile, job_location))
 
-    display_location = esc(_resolve_location(profile, job_location))
-
-    # Prefer AI-selected content; fall back to raw profile
-    experiences = generated.get("selected_experience") or profile.get("experience", [])
-    projects    = generated.get("selected_projects")   or profile.get("projects",   [])
-    skills      = generated.get("selected_skills")     or profile.get("skills",     {})
-    summary     = generated.get("professional_summary", "")
+    experiences    = generated.get("selected_experience") or profile.get("experience",     [])
+    projects       = generated.get("selected_projects")   or profile.get("projects",       [])
+    skills         = generated.get("selected_skills")     or profile.get("salesforce_skills") or profile.get("skills", {})
+    summary        = generated.get("professional_summary", "")
+    certifications = generated.get("certifications")      or profile.get("certifications", [])
 
     edu_tex   = _build_education(profile)
     exp_tex   = _build_experience(experiences)
     proj_tex  = _build_projects(projects)
     sk_tex    = _build_skills(skills)
-    cert_tex  = _build_certifications(generated.get("certifications", []))
+    cert_tex  = _build_certifications(certifications)
 
     summary_block = ""
     if summary:
@@ -339,8 +337,16 @@ def build_latex(
             f"\\small{{{esc(summary)}}}\n\n"
         )
 
+    cert_block = ""
+    if cert_tex:
+        cert_block = (
+            "%----------- CERTIFICATIONS -----------\n"
+            "\\section{Certifications}\n"
+            f"{cert_tex}\n\n"
+        )
+
     doc = (
-        "% ATS-Optimised Resume — Jake's Template\n"
+        "% ATS-Optimised Resume -- Jake's Template\n"
         f"% Role: {esc(job_title)} @ {esc(company_name)}\n"
         f"{JAKE_PREAMBLE}\n"
         "\\begin{document}\n\n"
@@ -370,13 +376,8 @@ def build_latex(
         "    \\resumeSubHeadingListStart\n"
         f"{proj_tex}\n"
         "    \\resumeSubHeadingListEnd\n\n"
-        + (
-            "%----------- CERTIFICATIONS -----------\n"
-            "\\section{Certifications}\n"
-            f"{cert_tex}\n\n"
-            if cert_tex else ""
-        )
-        +
+        + cert_block
+        + "%----------- TECHNICAL SKILLS -----------\n"
         "\\section{Technical Skills}\n"
         " \\begin{itemize}[leftmargin=0.15in, label={}]\n"
         "    \\small{\\item{\n"
@@ -388,20 +389,20 @@ def build_latex(
     return doc
 
 
-# ─── pdflatex check ───────────────────────────────────────────────────────────
+# ─── pdflatex check + compile ─────────────────────────────────────────────────
 
 def _check_pdflatex():
     """Raise a clear error if pdflatex is not available in PATH."""
     if shutil.which("pdflatex") is None:
         raise EnvironmentError(
             "pdflatex not found in PATH.\n\n"
-            "── Windows ──\n"
+            "-- Windows --\n"
             "  1. Download MiKTeX: https://miktex.org/download\n"
             "     (set 'Install missing packages on-the-fly = Yes')\n"
             "  2. Restart your terminal after install.\n\n"
-            "── macOS ──\n"
+            "-- macOS --\n"
             "  brew install --cask mactex\n\n"
-            "── Linux / Streamlit Cloud ──\n"
+            "-- Linux / Streamlit Cloud --\n"
             "  Ensure packages.txt contains: texlive-latex-extra texlive-fonts-recommended"
         )
 
@@ -432,12 +433,9 @@ def compile_latex_to_pdf(latex_content: str, timeout: int = 90) -> bytes:
         ]
 
         last_result = None
-        for run in range(2):           # two passes for correct layout
+        for _ in range(2):           # two passes for correct layout
             last_result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=timeout,
+                cmd, capture_output=True, text=True, timeout=timeout,
             )
 
         if os.path.exists(pdf_path):
@@ -457,7 +455,7 @@ def compile_latex_to_pdf(latex_content: str, timeout: int = 90) -> bytes:
 
         raise RuntimeError(
             "pdflatex compilation failed.\n\n"
-            "── Key errors ──\n" + "\n".join(error_lines) + "\n\n"
-            "── stdout ──\n" + (last_result.stdout if last_result else "") + "\n"
-            "── stderr ──\n" + (last_result.stderr if last_result else "")
+            "-- Key errors --\n" + "\n".join(error_lines) + "\n\n"
+            "-- stdout --\n" + (last_result.stdout if last_result else "") + "\n"
+            "-- stderr --\n" + (last_result.stderr if last_result else "")
         )
