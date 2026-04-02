@@ -281,6 +281,14 @@ with tab1:
             placeholder="e.g. Google",
             value=st.session_state.last_company,
         )
+        st.markdown("**CV Length**")
+        page_count = st.radio(
+            "CV Length",
+            ["1 Page", "2 Pages"],
+            index=1,
+            horizontal=True,
+            label_visibility="collapsed",
+        )
         st.markdown("**Job Location**")
         loc_choice = st.radio(
             "Job Location",
@@ -306,14 +314,6 @@ with tab1:
             "Paste the full JD here *",
             height=260,
             placeholder="Copy and paste the complete job description…",
-        )
-        st.markdown("**CV Length**")
-        page_count = st.radio(
-            "CV Length",
-            ["1 Page", "2 Pages"],
-            index=1,
-            horizontal=True,
-            label_visibility="collapsed",
         )
 
     st.divider()
