@@ -320,7 +320,8 @@ def _make_preamble(pages: int = 2) -> str:
 \newcommand{{\resumeProjectHeading}}[3]{{
     \item
     \begin{{tabular*}}{{0.97\textwidth}}{{l@{{\extracolsep{{\fill}}}}r}}
-      \small#1 & #2 \\
+      \small\textbf{{#1}} & \small #3 \\
+      \small\textit{{#2}} & \\
     \end{{tabular*}}\vspace{{-6pt}}
 }}
 
