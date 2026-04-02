@@ -317,7 +317,7 @@ def _make_preamble(pages: int = 2) -> str:
     \end{{tabular*}}\vspace{{-6pt}}
 }}
 
-\newcommand{{\resumeProjectHeading}}[2]{{
+\newcommand{{\resumeProjectHeading}}[3]{{
     \item
     \begin{{tabular*}}{{0.97\textwidth}}{{l@{{\extracolsep{{\fill}}}}r}}
       \small#1 & #2 \\
