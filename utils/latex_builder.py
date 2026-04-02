@@ -308,13 +308,13 @@ def _make_preamble(pages: int = 2) -> str:
 }}
 
 % 3-arg command: #1=name+link, #2=tech (own row, no overflow), #3=date
-\newcommand{{\resumeProjectHeading}}[3]{{
+\newcommand{\resumeProjectHeading}[3]{
     \item
-    \begin{{tabular*}}{{0.97\textwidth}}{{l@{{\extracolsep{{\fill}}}}r}}
-      \small#1 & \small #3 \\
-      \small\textit{{#2}} & \\
-    \end{{tabular*}}\vspace{{-6pt}}
-}}
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \small\textbf{#1} & \small #3 \\
+      \small\textit{#2} & \\
+    \end{tabular*}\vspace{-6pt}
+}
 
 \newcommand{{\resumeSubItem}}[1]{{\resumeItem{{#1}}\vspace{{-4pt}}}}
 \renewcommand\labelitemii{{$\vcenter{{\hbox{{\tiny$\bullet$}}}}$}}
@@ -498,5 +498,7 @@ def compile_latex_to_pdf(latex_content: str, timeout: int = 90) -> bytes:
             "pdflatex compilation failed.\n\n"
             "-- Key errors --\n" + "\n".join(error_lines) + "\n\n"
             "-- stdout --\n" + (last_result.stdout if last_result else "") + "\n"
-            "-- stderr --\n" + (last_result.stderr if last_result else "")
+            "-- stderr --\n" + (last_result.stderr if last_result else "") + "\n\n"
+            "-- LaTeX source (first 80 lines) --\n"
+            + "\n".join(latex_content.splitlines()[:80])
         )
