@@ -15,6 +15,7 @@ def generate_cv_content(
     company_name:     str,
     job_title:        str,
     gemini_api_key:   str,
+    pages:            int = 2,
 ) -> dict:
     client = genai.Client(api_key=gemini_api_key)
 
@@ -24,6 +25,30 @@ def generate_cv_content(
     )
     sf_skills_json = json.dumps(profile.get("salesforce_skills", {}), indent=2)
     research_json  = json.dumps(company_research, indent=2)
+
+    if pages == 1:
+        page_instruction = """── 1. ONE-PAGE CONSTRAINT (Absolute — non-negotiable) ──
+The entire resume MUST fit on a single page. Hard maximums:
+- Professional summary: exactly 2 sentences, max 35 words total.
+- Most recent role: exactly 4 bullets, max 18 words each.
+- All other roles: exactly 3 bullets each, max 18 words each.
+- Projects: exactly 2, exactly 2 bullets each, max 15 words each.
+- Skills: only the most JD-relevant items per category.
+- Education: GPA + max 4 coursework items."""
+    else:
+        page_instruction = """── 1. TWO-PAGE CONTENT GUIDELINES ──
+The resume should fill 1.5 to 2 pages — enough white space to breathe, enough
+content to be comprehensive. Use these guidelines:
+- Professional summary: exactly 3 sentences, max 60 words total.
+- Most recent role: 5 bullets, max 25 words each.
+- Second most recent role: 4-5 bullets, max 25 words each.
+- Older roles: 3-4 bullets each, max 25 words each.
+- Projects: 2-3 projects, 2-3 bullets each, max 22 words each.
+- Skills: include all JD-relevant items; be thorough but not exhaustive.
+- Education: GPA + up to 6 coursework items.
+Write with detail and specificity — include technologies, tools, methodologies,
+and quantified outcomes wherever available in the original profile."""
+
 
     prompt = f"""You are a senior technical recruiter and ATS optimisation expert.
 Your task: produce a perfectly tailored, ONE-PAGE, ATS-friendly resume.
@@ -58,16 +83,7 @@ COMPANY RESEARCH
 ════════════════════════════════
 STRICT INSTRUCTIONS
 ════════════════════════════════
-
-── 1. ONE-PAGE CONSTRAINT (Absolute — non-negotiable) ──
-The entire resume MUST fit on a single page. These are hard maximums:
-- Professional summary: exactly 2 sentences, max 35 words total.
-- Most recent role: exactly 4 bullets, max 18 words each.
-- All other roles: exactly 3 bullets each, max 18 words each.
-- Projects: exactly 2 projects, exactly 2 bullets each, max 15 words each.
-- Skills: only the most JD-relevant items per category. No exhaustive lists.
-- Education bullets: GPA + max 4 relavent coursework items only.
-If content exceeds these limits, cut words — never exceed the counts.
+{page_instruction}
 
 ── 2. ATS PARSEABILITY ──
 - Use ONLY plain ASCII characters. No Unicode dashes, bullets, or symbols.
@@ -80,18 +96,18 @@ If content exceeds these limits, cut words — never exceed the counts.
 
 ── 3. PROFESSIONAL SUMMARY ──
 - Open with the EXACT job title from the JD.
-- Calculate total years of experience by finding the earliest start date across
-  ALL roles in the profile and computing to present (2026).
-  Example: earliest role Jun. 2022 to 2026 = 4 years. Never round down.
-- Include 2-3 JD-specific industry/domain keywords where the candidate has
-  GENUINE basis. Examples:
-    - JD mentions "enterprise software" → candidate has AppExchange products = include it
-    - JD mentions "third-party integrations" → candidate has Twilio/Stripe/etc. = include it
-    - JD mentions "Web3 / blockchain" → write action words such as intrest in Web3 or newbie/learning blockchain
-    - JD mentions "infrastructure / middleware" → include if candidate has API/integration work
-  Do NOT fabricate domain experience. Map JD language to real candidate experience.
-- Exactly 2 sentences. Max 40 words total.
-- No third-person ("He/She/candidate name").
+- Calculate total years from earliest role start date to 2026. Jun 2022 = 4 years.
+- ALWAYS include JD domain/industry keywords by mapping them to genuine candidate
+  experience, even if those terms don't appear in the skills section:
+    "enterprise software"      → candidate has AppExchange products
+    "third-party integrations" → candidate has Twilio, Stripe, REST APIs
+    "middleware"               → candidate has API integration and event-driven work
+    "infrastructure"           → candidate has CI/CD, sandboxes, deployment pipelines
+    "Web3 / blockchain"        → write action words such as intrest in Web3 or newbie/learning blockchain
+    "data quality"             → candidate has Data Loader, Health Check, OWD work
+  Match the JD's language exactly where the candidate's experience supports it.
+- No "passionate about", "keen interest in", or third-person ("He/She/name").
+- For 1-page: exactly 2 sentences. For 2-page: exactly 3 sentences.
 
 ── 4. EXPERIENCE BULLETS ──
 VERB VARIETY: Never repeat the same opening verb across bullets in the same role.

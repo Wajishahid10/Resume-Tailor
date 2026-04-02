@@ -213,6 +213,14 @@ with tab1:
             placeholder="e.g. Google",
             value=st.session_state.last_company,
         )
+        st.markdown("**CV Length**")
+        page_count = st.radio(
+            "CV Length",
+            ["1 Page", "2 Pages"],
+            index=1,
+            horizontal=True,
+            label_visibility="collapsed",
+        )
         st.markdown("**Job Location**")
         loc_choice = st.radio(
             "Job Location",
@@ -288,6 +296,7 @@ with tab1:
                     company_name=company_name,
                     job_title=job_title,
                     gemini_api_key=gemini_key,
+                    pages=1 if page_count == "1 Page" else 2,
                 )
                 st.session_state.generated      = generated
                 st.session_state.last_job_title = job_title
@@ -304,6 +313,7 @@ with tab1:
                     job_title=job_title,
                     company_name=company_name,
                     job_location=job_location,
+                    pages=1 if page_count == "1 Page" else 2,
                 )
                 st.session_state.latex_source = latex_src
 

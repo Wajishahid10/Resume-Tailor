@@ -214,7 +214,7 @@ _GENERIC_SKILL_LABELS = {
 
 def _build_skills(skills: dict) -> str:
     # Detect which label map to use based on keys present
-    is_sf = any(k in skills for k in _SF_SKILL_LABELS)
+    is_sf     = any(k in skills for k in _SF_SKILL_LABELS)
     label_map = _SF_SKILL_LABELS if is_sf else _GENERIC_SKILL_LABELS
     lines = []
     for key, label in label_map.items():
@@ -227,72 +227,93 @@ def _build_skills(skills: dict) -> str:
 
 # ─── Jake's preamble ──────────────────────────────────────────────────────────
 
-JAKE_PREAMBLE = r"""
-\documentclass[letterpaper,10pt]{article}
+def _make_preamble(pages: int = 2) -> str:
+    """Return Jake's resume preamble tuned for 1 or 2 page output."""
+    if pages == 1:
+        font_size   = "10pt"
+        side_margin = "-0.6in"
+        top_margin  = "-0.65in"
+        text_width  = "1.2in"
+        text_height = "1.3in"
+        section_vspace = "-6pt"
+    else:
+        font_size   = "11pt"
+        side_margin = "-0.5in"
+        top_margin  = "-0.5in"
+        text_width  = "1.0in"
+        text_height = "1.0in"
+        section_vspace = "-4pt"
 
-\usepackage{latexsym}
-\usepackage[empty]{fullpage}
-\usepackage{titlesec}
-\usepackage{marvosym}
-\usepackage[usenames,dvipsnames]{color}
-\usepackage{verbatim}
-\usepackage{enumitem}
-\usepackage[hidelinks]{hyperref}
-\usepackage{fancyhdr}
-\usepackage[english]{babel}
-\usepackage{tabularx}
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\input{glyphtounicode}
+    return rf"""
+\documentclass[letterpaper,{font_size}]{{article}}
 
-\pagestyle{fancy}
-\fancyhf{}
-\fancyfoot{}
-\renewcommand{\headrulewidth}{0pt}
-\renewcommand{\footrulewidth}{0pt}
+\usepackage{{latexsym}}
+\usepackage[empty]{{fullpage}}
+\usepackage{{titlesec}}
+\usepackage{{marvosym}}
+\usepackage[usenames,dvipsnames]{{color}}
+\usepackage{{verbatim}}
+\usepackage{{enumitem}}
+\usepackage[hidelinks]{{hyperref}}
+\usepackage{{fancyhdr}}
+\usepackage[english]{{babel}}
+\usepackage{{tabularx}}
+\usepackage[utf8]{{inputenc}}
+\usepackage[T1]{{fontenc}}
+\input{{glyphtounicode}}
 
-\addtolength{\oddsidemargin}{-0.6in}
-\addtolength{\evensidemargin}{-0.6in}
-\addtolength{\textwidth}{1.2in}
-\addtolength{\topmargin}{-.65in}
-\addtolength{\textheight}{1.3in}
+\pagestyle{{fancy}}
+\fancyhf{{}}
+\fancyfoot{{}}
+\renewcommand{{\headrulewidth}}{{0pt}}
+\renewcommand{{\footrulewidth}}{{0pt}}
 
-\urlstyle{same}
+\addtolength{{\oddsidemargin}}{{{side_margin}}}
+\addtolength{{\evensidemargin}}{{{side_margin}}}
+\addtolength{{\textwidth}}{{{text_width}}}
+\addtolength{{\topmargin}}{{{top_margin}}}
+\addtolength{{\textheight}}{{{text_height}}}
+
+\urlstyle{{same}}
 \raggedbottom
 \raggedright
-\setlength{\tabcolsep}{0in}
+\setlength{{\tabcolsep}}{{0in}}
 
-\titleformat{\section}{
-  \vspace{-6pt}\scshape\raggedright\large
-}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+\titleformat{{\section}}{{
+  \vspace{{{section_vspace}}}\scshape\raggedright\large
+}}{{}}{{0em}}{{}}[\color{{black}}\titlerule \vspace{{-5pt}}]
 
 \pdfgentounicode=1
 
 % ── Jake's custom commands ──────────────────────────────────────────────────
-\newcommand{\resumeItem}[1]{\item\small{#1 \vspace{-2pt}}}
+\newcommand{{\resumeItem}}[1]{{\item\small{{#1 \vspace{{-1pt}}}}}}
 
-\newcommand{\resumeSubheading}[4]{
-  \vspace{-2pt}\item
-    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
-      \textbf{#1} & #2 \\
-      \textit{\small#3} & \textit{\small #4} \\
-    \end{tabular*}\vspace{-7pt}
-}
+\newcommand{{\resumeSubheading}}[4]{{
+  \vspace{{-2pt}}\item
+    \begin{{tabular*}}{{0.97\textwidth}}[t]{{l@{{\extracolsep{{\fill}}}}r}}
+      \textbf{{#1}} & #2 \\
+      \textit{{\small#3}} & \textit{{\small #4}} \\
+    \end{{tabular*}}\vspace{{-6pt}}
+}}
 
-\newcommand{\resumeProjectHeading}[2]{
+\newcommand{{\resumeProjectHeading}}[2]{{
     \item
-    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+    \begin{{tabular*}}{{0.97\textwidth}}{{l@{{\extracolsep{{\fill}}}}r}}
       \small#1 & #2 \\
-    \end{tabular*}\vspace{-7pt}
-}
+    \end{{tabular*}}\vspace{{-6pt}}
+}}
 
-\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
-\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
-\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
-\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
-\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.15in]}
-\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+\newcommand{{\resumeSubItem}}[1]{{\resumeItem{{#1}}\vspace{{-4pt}}}}
+\renewcommand\labelitemii{{$\vcenter{{\hbox{{\tiny$\bullet$}}}}$}}
+\newcommand{{\resumeSubHeadingListStart}}{{\begin{{itemize}}[leftmargin=0.15in, label={{}}]}}
+\newcommand{{\resumeSubHeadingListEnd}}{{\end{{itemize}}}}
+\newcommand{{\resumeItemListStart}}{{\begin{{itemize}}[leftmargin=0.2in, itemsep=1pt, parsep=0pt]}}
+\newcommand{{\resumeItemListEnd}}{{\end{{itemize}}\vspace{{-4pt}}}}
 """
+
+
+# Keep for backward compat — used nowhere but kept so old imports don't break
+JAKE_PREAMBLE = _make_preamble(2)
 
 
 # ─── Full document ────────────────────────────────────────────────────────────
@@ -303,6 +324,7 @@ def build_latex(
     job_title:    str,
     company_name: str,
     job_location: str = "",
+    pages:        int = 2,
 ) -> str:
     """
     Assemble a complete Jake's-Resume LaTeX document.
@@ -328,7 +350,8 @@ def build_latex(
     summary        = generated.get("professional_summary", "")
     certifications = generated.get("certifications")      or profile.get("certifications", [])
 
-    edu_tex   = _build_education(profile)
+    # ── Page-aware preamble ───────────────────────────────────────────────────
+    preamble = _make_preamble(pages)
     exp_tex   = _build_experience(experiences)
     proj_tex  = _build_projects(projects)
     sk_tex    = _build_skills(skills)
@@ -352,7 +375,7 @@ def build_latex(
     doc = (
         "% ATS-Optimised Resume -- Jake's Template\n"
         f"% Role: {esc(job_title)} @ {esc(company_name)}\n"
-        f"{JAKE_PREAMBLE}\n"
+        f"{preamble}\n"
         "\\begin{document}\n\n"
         "%---------- HEADING ----------\n"
         "\\begin{center}\n"
