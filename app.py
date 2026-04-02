@@ -23,7 +23,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ─── Password gate ─────────────────────────────────────────────────────────────
+# ─── Password gate ────────────────────────────────────────────────────────────
 
 def _check_auth() -> bool:
     """
@@ -31,7 +31,7 @@ def _check_auth() -> bool:
     Persists auth for the device session via st.query_params.
     Bookmark the URL after login to skip password on return visits.
     """
-    secret_pw   = st.secrets.get("app", {}).get("password", "")
+    secret_pw = st.secrets.get("app", {}).get("password", "")
     if not secret_pw:
         return True   # No password set — open access
 
@@ -137,7 +137,7 @@ def load_profile_from_secrets() -> dict:
             if cat in skills:
                 skills[cat] = list(skills[cat])
 
-        # Salesforce skills
+        # Salesforce skills — separate section for SF-specific JDs
         sf_skills = profile.get("salesforce_skills", {})
         for cat in _SF_SKILL_KEYS:
             if cat in sf_skills:
@@ -149,7 +149,7 @@ def load_profile_from_secrets() -> dict:
             dict(c) for c in profile.get("certifications", [])
         ]
 
-        # Ensure bullets lists on experience / projects
+        # Ensure list types on experience / projects
         for exp in profile.get("experience", []):
             exp["bullets"] = list(exp.get("bullets", []))
         for proj in profile.get("projects", []):
@@ -220,6 +220,8 @@ with st.sidebar:
         st.warning("No profile found in secrets.toml")
 
     st.divider()
+
+    # ── Output settings ───────────────────────────────────────────────────────
     st.subheader("⚙️ Output Settings")
     page_count = st.radio(
         "CV Length",
@@ -227,7 +229,10 @@ with st.sidebar:
         index=1,
         horizontal=True,
     )
+
     st.divider()
+
+    # ── Profile override ──────────────────────────────────────────────────────
     st.subheader("📤 Override Profile")
     st.caption("Upload a CV to replace your profile **for this session only**.")
 
@@ -281,14 +286,9 @@ with tab1:
             placeholder="e.g. Google",
             value=st.session_state.last_company,
         )
-        # st.markdown("**CV Length**")
-        # page_count = st.radio(
-        #     "CV Length",
-        #     ["1 Page", "2 Pages"],
-        #     index=1,
-        #     horizontal=True,
-        #     label_visibility="collapsed",
-        # )
+        # CV Length moved to sidebar to keep tab1 compact
+        # page_count = st.radio("CV Length", ["1 Page", "2 Pages"], index=1, horizontal=True)
+
         st.markdown("**Job Location**")
         loc_choice = st.radio(
             "Job Location",
@@ -302,7 +302,8 @@ with tab1:
                 "Enter location",
                 placeholder="e.g. New York, NY / London, UK",
                 value=st.session_state.last_location
-                      if st.session_state.last_location not in ("Remote", "Lahore, Pakistan", "Pakistan - Open to Relocate", "")
+                      if st.session_state.last_location not in
+                         ("Remote", "Lahore, Pakistan", "Pakistan - Open to Relocate", "")
                       else "",
             )
         else:
@@ -322,7 +323,8 @@ with tab1:
     missing = []
     if not job_title:       missing.append("Job Title")
     if not job_description: missing.append("Job Description")
-    if not st.session_state.profile: missing.append("Profile (upload CV or set secrets)")
+    if not st.session_state.profile:
+        missing.append("Profile (upload CV or set secrets)")
 
     if missing:
         st.warning(f"⚠️ Please fill in: **{', '.join(missing)}**")
@@ -454,6 +456,7 @@ with tab2:
                 "sf_apis_integrations": "APIs & Integrations", "sf_cicd_deployment": "CI/CD & Deployment",
                 "sf_data_security": "Data & Security", "sf_developer_tools": "Developer Tools",
                 "sf_languages": "Languages", "sf_methodologies": "Methodologies",
+                # Generic fallback labels
                 "languages": "Languages", "frameworks": "Frameworks",
                 "tools": "Developer Tools", "other": "Other",
             }
@@ -494,7 +497,7 @@ with tab2:
 
         st.divider()
 
-        # ── LaTeX source ──────────────────────────────────────────────────────
+        # ── LaTeX source (for debugging / Overleaf upload) ────────────────────
         with st.expander("📄 View LaTeX Source (.tex)"):
             st.code(st.session_state.latex_source or "", language="latex")
 

@@ -78,13 +78,6 @@ _SCHEMA = {
 _SCHEMA_STR = json.dumps(_SCHEMA, indent=2)
 
 
-def _clean_json(text: str) -> str:
-    text = text.strip()
-    text = re.sub(r"^```(?:json)?\s*", "", text)
-    text = re.sub(r"\s*```$",          "", text)
-    return text.strip()
-
-
 def _gemini_extract(text: str, api_key: str) -> dict:
     client = genai.Client(api_key=api_key)
 

@@ -27,7 +27,6 @@ def esc(text: str) -> str:
     """Escape special LaTeX characters in a plain-text string."""
     if not text:
         return ""
-    # Handle backslash first before other replacements
     result = text
     for char, replacement in _LATEX_SPECIAL:
         result = result.replace(char, replacement)
@@ -135,35 +134,18 @@ def _build_experience(experiences: list) -> str:
     return "\n".join(lines)
 
 
-def _trim_tech(tech_list: list, project_name: str = "", has_link: bool = False) -> str:
-    """
-    Join tech items, trimming so the full heading line stays within one column.
-    Accounts for project name and optional repo link eating into available space.
-    LaTeX column width ~90 chars; subtract name, separators, and link if present.
-    """
-    overhead = len(project_name) + 9   # " $|$ " separators
-    if has_link:
-        overhead += 12                 # " $|$ repo" approx
-    budget = max(30, 90 - overhead)
-
-    result, parts = "", []
-    for t in tech_list:
-        candidate = ", ".join(parts + [t])
-        if len(candidate) <= budget:
-            parts.append(t)
-        else:
-            break
-    return ", ".join(esc(t) for t in parts)
-
-
 def _build_projects(projects: list) -> str:
     """
-    Render projects. Tech list comes pre-filtered by Gemini to JD-relevant
-    items only — render all of them, no truncation.
+    Renders projects with:
+      - Row 1: Bold project name (+ optional repo link)  |  date
+      - Row 2: Italic tech stack (full width, no overflow)
+    This matches the 3-arg \\resumeProjectHeading{name}{tech}{date} command.
+    IMPORTANT: must stay in sync with \\resumeProjectHeading in _make_preamble.
     """
     lines = []
     for proj in projects:
         name    = esc(proj.get("name", ""))
+        # Tech list is pre-filtered by Gemini to JD-relevant items only
         tech    = ", ".join(esc(t) for t in proj.get("tech", []))
         date    = esc(proj.get("date", ""))
         link    = proj.get("link", "").strip()
@@ -171,14 +153,17 @@ def _build_projects(projects: list) -> str:
         if not bullets and proj.get("description"):
             bullets = [proj["description"]]
 
-        heading = f"\\textbf{{{name}}} $|$ \\emph{{{tech}}}"
+        # Build the name part — repo link appended if available
+        name_part = f"\\textbf{{{name}}}"
         if link:
-            safe_link = esc_url(_strip_prefix(link))
-            heading += f" $|$ \\href{{https://{safe_link}}}{{\\underline{{repo}}}}"
+            safe_link  = esc_url(_strip_prefix(link))
+            name_part += f" $|$ \\href{{https://{safe_link}}}{{\\underline{{repo}}}}"
 
+        # 3 args: {name+link} {tech} {date}
+        # Row 1: name+link | date   Row 2: tech (full width)
         lines.append(
             f"    \\resumeProjectHeading\n"
-            f"      {{{heading}}}{{{date}}}\n"
+            f"      {{{name_part}}}{{{tech}}}{{{date}}}\n"
             f"      \\resumeItemListStart"
         )
         for b in bullets:
@@ -192,18 +177,19 @@ def _build_certifications(certifications: list) -> str:
         return ""
     lines = ["  \\resumeSubHeadingListStart"]
     for cert in certifications:
-        name     = esc(cert.get("name",   ""))
+        name = esc(cert.get("name",   ""))
+        date = esc(cert.get("date",   ""))
         # issuer = esc(cert.get("issuer", ""))
-        date     = esc(cert.get("date",   ""))
         # Issuer omitted — Salesforce certs already contain "Salesforce" in the name
         lines.append(
             f"    \\item\\small{{\\textbf{{{name}}} \\hfill {date}}}"
         )
-        """ lines.append(
-            f"    \\resumeSubheading\n"
-            f"      {{{name}}}{{{date}}}\n"
-            f"      {{{issuer}}}{{}}"
-        ) """
+        # Alternative: full subheading with issuer (uncomment if needed)
+        # lines.append(
+        #     f"    \\resumeSubheading\n"
+        #     f"      {{{name}}}{{{date}}}\n"
+        #     f"      {{{issuer}}}{{}}"
+        # )
     lines.append("  \\resumeSubHeadingListEnd")
     return "\n".join(lines)
 
@@ -249,20 +235,24 @@ def _build_skills(skills: dict) -> str:
 # ─── Jake's preamble ──────────────────────────────────────────────────────────
 
 def _make_preamble(pages: int = 2) -> str:
-    """Return Jake's resume preamble tuned for 1 or 2 page output."""
+    """
+    Return Jake's resume preamble tuned for 1 or 2 page output.
+    NOTE: \\resumeProjectHeading takes 3 args — {name}{tech}{date}.
+          _build_projects MUST pass all 3 args or LaTeX will error.
+    """
     if pages == 1:
-        font_size   = "10pt"
-        side_margin = "-0.6in"
-        top_margin  = "-0.65in"
-        text_width  = "1.2in"
-        text_height = "1.3in"
+        font_size      = "10pt"
+        side_margin    = "-0.6in"
+        top_margin     = "-0.65in"
+        text_width     = "1.2in"
+        text_height    = "1.3in"
         section_vspace = "-6pt"
     else:
-        font_size   = "11pt"
-        side_margin = "-0.5in"
-        top_margin  = "-0.5in"
-        text_width  = "1.0in"
-        text_height = "1.0in"
+        font_size      = "11pt"
+        side_margin    = "-0.5in"
+        top_margin     = "-0.5in"
+        text_width     = "1.0in"
+        text_height    = "1.0in"
         section_vspace = "-4pt"
 
     return rf"""
@@ -317,10 +307,11 @@ def _make_preamble(pages: int = 2) -> str:
     \end{{tabular*}}\vspace{{-6pt}}
 }}
 
+% 3-arg command: #1=name+link, #2=tech (own row, no overflow), #3=date
 \newcommand{{\resumeProjectHeading}}[3]{{
     \item
     \begin{{tabular*}}{{0.97\textwidth}}{{l@{{\extracolsep{{\fill}}}}r}}
-      \small\textbf{{#1}} & \small #3 \\
+      \small#1 & \small #3 \\
       \small\textit{{#2}} & \\
     \end{{tabular*}}\vspace{{-6pt}}
 }}
@@ -332,7 +323,6 @@ def _make_preamble(pages: int = 2) -> str:
 \newcommand{{\resumeItemListStart}}{{\begin{{itemize}}[leftmargin=0.2in, itemsep=1pt, parsep=0pt]}}
 \newcommand{{\resumeItemListEnd}}{{\end{{itemize}}\vspace{{-4pt}}}}
 """
-
 
 # Keep for backward compat — used nowhere but kept so old imports don't break
 JAKE_PREAMBLE = _make_preamble(2)
@@ -350,7 +340,6 @@ def build_latex(
 ) -> str:
     """
     Assemble a complete Jake's-Resume LaTeX document.
-
     Uses AI-selected experience / projects / skills from `generated`,
     falling back to the raw profile values if a section is empty.
     """
@@ -366,14 +355,15 @@ def build_latex(
     profile_link_label = "Trailhead" if (_is_salesforce_role(job_title) and trailhead) else "GitHub"
     display_location   = esc(_resolve_location(profile, job_location))
 
+    # Prefer AI-selected content; fall back to raw profile
     experiences    = generated.get("selected_experience") or profile.get("experience",     [])
     projects       = generated.get("selected_projects")   or profile.get("projects",       [])
     skills         = generated.get("selected_skills")     or profile.get("salesforce_skills") or profile.get("skills", {})
     summary        = generated.get("professional_summary", "")
     certifications = generated.get("certifications")      or profile.get("certifications", [])
 
-    # ── Page-aware preamble ───────────────────────────────────────────────────
-    preamble = _make_preamble(pages)
+    # Page-aware preamble (font size + margins)
+    preamble  = _make_preamble(pages)
     edu_tex   = _build_education(profile)
     exp_tex   = _build_experience(experiences)
     proj_tex  = _build_projects(projects)
@@ -462,6 +452,7 @@ def _check_pdflatex():
 def compile_latex_to_pdf(latex_content: str, timeout: int = 90) -> bytes:
     """
     Write LaTeX to a temp dir, run pdflatex twice, return PDF bytes.
+    Two passes needed for correct layout (references, lengths).
     Raises RuntimeError with compiler output on failure.
     """
     _check_pdflatex()   # fast-fail with a helpful message if not installed
@@ -483,7 +474,7 @@ def compile_latex_to_pdf(latex_content: str, timeout: int = 90) -> bytes:
         ]
 
         last_result = None
-        for _ in range(2):           # two passes for correct layout
+        for _ in range(2):   # Two passes for correct layout
             last_result = subprocess.run(
                 cmd, capture_output=True, text=True, timeout=timeout,
             )
