@@ -135,17 +135,25 @@ def _build_experience(experiences: list) -> str:
     return "\n".join(lines)
 
 
-def _trim_tech(tech_list: list, max_chars: int = 80) -> str:
+def _trim_tech(tech_list: list, project_name: str = "", has_link: bool = False) -> str:
     """
-    Join tech items and trim to max_chars at the last clean comma boundary.
-    Gemini already filters to JD-relevant items — this only catches overflow.
+    Join tech items, trimming so the full heading line stays within one column.
+    Accounts for project name and optional repo link eating into available space.
+    LaTeX column width ~90 chars; subtract name, separators, and link if present.
     """
-    full = ", ".join(esc(t) for t in tech_list)
-    if len(full) <= max_chars:
-        return full
-    trimmed = full[:max_chars]
-    cut = trimmed.rfind(",")
-    return trimmed[:cut] if cut > 0 else trimmed
+    overhead = len(project_name) + 9   # " $|$ " separators
+    if has_link:
+        overhead += 12                 # " $|$ repo" approx
+    budget = max(30, 90 - overhead)
+
+    result, parts = "", []
+    for t in tech_list:
+        candidate = ", ".join(parts + [t])
+        if len(candidate) <= budget:
+            parts.append(t)
+        else:
+            break
+    return ", ".join(esc(t) for t in parts)
 
 
 def _build_projects(projects: list) -> str:

@@ -131,31 +131,29 @@ MULTI-ORG FRAMING: Where the profile mentions global teams or multi-region work,
 frame it as cross-org or multi-org Salesforce architecture experience.
 
 ── 5. SKILL SELECTION AND CATEGORISATION ──
-CRITICAL — CATEGORY KEYS:
-Determine if this is a Salesforce role by checking if the job title or description
-contains: salesforce, sfdc, apex, lwc, lightning, trailhead, service cloud,
-sales cloud, cpq, force.com.
+CRITICAL — include a skill ONLY if it is directly relevant to THIS specific JD.
+Omit anything not mentioned or implied by the JD. Fewer, targeted skills beat
+exhaustive lists. Apply these per-category rules strictly:
 
-If YES (Salesforce role):
-- Draw skills PRIMARILY from SALESFORCE SKILLS above.
-- Supplement with relevant items from profile "skills" (languages, tools) where
-  the JD warrants them.
-- Return ONLY these exact SF keys (omit any category with zero relevant items):
-    "sf_clouds"            -> Salesforce platform clouds
-    "sf_ai_automation"     -> AI and automation tools
-    "sf_features"          -> Salesforce config features
-    "sf_development"       -> Apex, LWC, SOQL, Triggers, etc.
-    "sf_apis_integrations" -> REST, SOAP, OAuth 2.0, third-party tools
-    "sf_cicd_deployment"   -> SFDX, Unlocked Packages, Change Sets, etc.
-    "sf_data_security"     -> Data Loader, Permission Sets, OWD, etc.
-    "sf_developer_tools"   -> Git, Postman, VS Code, Jira, etc.
-    "sf_languages"         -> Programming languages only
-    "sf_methodologies"     -> Agile, Scrum, SDLC, etc.
+For SALESFORCE roles use ONLY these SF keys:
+    "sf_clouds"            -> only clouds explicitly mentioned or clearly implied by JD
+    "sf_ai_automation"     -> only automation tools the JD references
+    "sf_features"          -> only Salesforce features the JD requires or implies
+    "sf_development"       -> Apex, LWC, SOQL etc. — only what the JD needs
+    "sf_apis_integrations" -> only integration tools/protocols the JD mentions
+    "sf_cicd_deployment"   -> only DevOps tools the JD references
+    "sf_data_security"     -> only data/security items the JD mentions
+    "sf_developer_tools"   -> Git, Postman, VS Code — only tools relevant to JD
+    "sf_languages"         -> STRICT: include ONLY languages the JD explicitly
+                              requires or that are core to Salesforce dev (Apex,
+                              SOQL, SOSL, JavaScript). NEVER include Java, C#,
+                              Kotlin, Dart, C, C++, Rust, or Flutter for a
+                              Salesforce role unless the JD explicitly asks for them.
+    "sf_methodologies"     -> only methodologies the JD references
 
-If NO (non-Salesforce role):
-- Use ONLY: "languages", "frameworks", "tools", "other"
-
+For NON-SALESFORCE roles use: "languages", "frameworks", "tools", "other"
 NEVER mix SF keys with generic keys.
+Omit any skill or category entirely if it has zero JD-relevant items.
 
 ── 6. PROJECT SELECTION ──
 - Select exactly 2 projects that best match the JD. Drop the rest.
