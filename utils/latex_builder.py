@@ -352,6 +352,7 @@ def build_latex(
 
     # ── Page-aware preamble ───────────────────────────────────────────────────
     preamble = _make_preamble(pages)
+    edu_tex   = _build_education(profile)
     exp_tex   = _build_experience(experiences)
     proj_tex  = _build_projects(projects)
     sk_tex    = _build_skills(skills)
