@@ -172,13 +172,17 @@ def _build_certifications(certifications: list) -> str:
     lines = ["  \\resumeSubHeadingListStart"]
     for cert in certifications:
         name   = esc(cert.get("name",   ""))
-        issuer = esc(cert.get("issuer", ""))
+        # issuer = esc(cert.get("issuer", ""))
         date   = esc(cert.get("date",   ""))
+        # Issuer omitted — Salesforce certs already contain "Salesforce" in the name
         lines.append(
+            f"    \\item\\small{{\\textbf{{{name}}} \\hfill {date}}}"
+        )
+        """ lines.append(
             f"    \\resumeSubheading\n"
             f"      {{{name}}}{{{date}}}\n"
             f"      {{{issuer}}}{{}}"
-        )
+        ) """
     lines.append("  \\resumeSubHeadingListEnd")
     return "\n".join(lines)
 
@@ -224,7 +228,7 @@ def _build_skills(skills: dict) -> str:
 # ─── Jake's preamble ──────────────────────────────────────────────────────────
 
 JAKE_PREAMBLE = r"""
-\documentclass[letterpaper,11pt]{article}
+\documentclass[letterpaper,10pt]{article}
 
 \usepackage{latexsym}
 \usepackage[empty]{fullpage}
@@ -247,11 +251,11 @@ JAKE_PREAMBLE = r"""
 \renewcommand{\headrulewidth}{0pt}
 \renewcommand{\footrulewidth}{0pt}
 
-\addtolength{\oddsidemargin}{-0.5in}
-\addtolength{\evensidemargin}{-0.5in}
-\addtolength{\textwidth}{1in}
-\addtolength{\topmargin}{-.5in}
-\addtolength{\textheight}{1.0in}
+\addtolength{\oddsidemargin}{-0.6in}
+\addtolength{\evensidemargin}{-0.6in}
+\addtolength{\textwidth}{1.2in}
+\addtolength{\topmargin}{-.65in}
+\addtolength{\textheight}{1.3in}
 
 \urlstyle{same}
 \raggedbottom
@@ -259,7 +263,7 @@ JAKE_PREAMBLE = r"""
 \setlength{\tabcolsep}{0in}
 
 \titleformat{\section}{
-  \vspace{-4pt}\scshape\raggedright\large
+  \vspace{-6pt}\scshape\raggedright\large
 }{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
 
 \pdfgentounicode=1
@@ -286,7 +290,7 @@ JAKE_PREAMBLE = r"""
 \renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
 \newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
 \newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
-\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.15in]}
 \newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
 """
 
