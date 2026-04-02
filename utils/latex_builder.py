@@ -171,9 +171,9 @@ def _build_certifications(certifications: list) -> str:
         return ""
     lines = ["  \\resumeSubHeadingListStart"]
     for cert in certifications:
-        name   = esc(cert.get("name",   ""))
+        name     = esc(cert.get("name",   ""))
         # issuer = esc(cert.get("issuer", ""))
-        date   = esc(cert.get("date",   ""))
+        date     = esc(cert.get("date",   ""))
         # Issuer omitted — Salesforce certs already contain "Salesforce" in the name
         lines.append(
             f"    \\item\\small{{\\textbf{{{name}}} \\hfill {date}}}"

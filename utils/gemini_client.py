@@ -59,14 +59,15 @@ COMPANY RESEARCH
 STRICT INSTRUCTIONS
 ════════════════════════════════
 
-── 1. ONE-PAGE CONSTRAINT (Non-negotiable) ──
-The entire resume MUST fit on one page. Enforce these hard limits:
-- Professional summary: exactly 2 sentences, max 40 words total.
-- Most recent role: max 4 bullets.
-- All other roles: max 3 bullets each.
-- Projects: select max 2, max 2 bullets each.
-- Every bullet: max 20 words. Cut filler, be direct.
-- Skills: include only items directly relevant to this JD.
+── 1. ONE-PAGE CONSTRAINT (Absolute — non-negotiable) ──
+The entire resume MUST fit on a single page. These are hard maximums:
+- Professional summary: exactly 2 sentences, max 35 words total.
+- Most recent role: exactly 4 bullets, max 18 words each.
+- All other roles: exactly 3 bullets each, max 18 words each.
+- Projects: exactly 2 projects, exactly 2 bullets each, max 15 words each.
+- Skills: only the most JD-relevant items per category. No exhaustive lists.
+- Education bullets: GPA + max 4 relavent coursework items only.
+If content exceeds these limits, cut words — never exceed the counts.
 
 ── 2. ATS PARSEABILITY ──
 - Use ONLY plain ASCII characters. No Unicode dashes, bullets, or symbols.
@@ -80,10 +81,17 @@ The entire resume MUST fit on one page. Enforce these hard limits:
 ── 3. PROFESSIONAL SUMMARY ──
 - Open with the EXACT job title from the JD.
 - Calculate total years of experience by finding the earliest start date across
-  ALL roles in the profile and computing years to present. Be accurate.
-  Example: earliest role Jun. 2022, current year 2026 = 4 years experience.
-- Mention the top 2 hard skills most prominent in the JD.
-- Exactly 2 sentences. No "passionate about", "keen interest in", or "He/She".
+  ALL roles in the profile and computing to present (2026).
+  Example: earliest role Jun. 2022 to 2026 = 4 years. Never round down.
+- Include 2-3 JD-specific industry/domain keywords where the candidate has
+  GENUINE basis. Examples:
+    - JD mentions "enterprise software" → candidate has AppExchange products = include it
+    - JD mentions "third-party integrations" → candidate has Twilio/Stripe/etc. = include it
+    - JD mentions "Web3 / blockchain" → write action words such as intrest in Web3 or newbie/learning blockchain
+    - JD mentions "infrastructure / middleware" → include if candidate has API/integration work
+  Do NOT fabricate domain experience. Map JD language to real candidate experience.
+- Exactly 2 sentences. Max 40 words total.
+- No third-person ("He/She/candidate name").
 
 ── 4. EXPERIENCE BULLETS ──
 VERB VARIETY: Never repeat the same opening verb across bullets in the same role.
@@ -153,7 +161,7 @@ NEVER mix SF keys with generic keys.
   describe scope qualitatively instead.
 
 ── 8. CERTIFICATIONS ──
-Extract certifications from the profile. Return name and date only — omit issuer if issuer name in certification name.
+Extract certifications from the profile. Return name and date only — omit issuer.
 
 ── 9. MATCH SCORE ──
 Score 0-100: keyword overlap, experience level, tool match, industry alignment.
@@ -176,7 +184,7 @@ OUTPUT JSON SCHEMA
     {{"company": "", "role": "", "date": "", "location": "", "bullets": []}}
   ],
   "certifications": [
-    {{"name": "", "issuer": "","date": ""}}
+    {{"name": "", "date": ""}}
   ],
   "professional_summary": "",
   "ats_keywords_used":    [],
