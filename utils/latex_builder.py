@@ -309,7 +309,7 @@ def _make_preamble(pages: int = 2) -> str:
 % p{{0.73\\textwidth}} lets long tech lists wrap — no truncation
 \newcommand{{\resumeProjectHeading}}[2]{{
     \item
-    \begin{{tabular*}}{{0.97\textwidth}}{{p{{0.73\textwidth}}@{{\extracolsep{{\fill}}}}r}}
+    \begin{{tabular*}}{{0.97\textwidth}}{{p{{0.79\textwidth}}@{{\extracolsep{{\fill}}}}r}}
       \small #1 & \small #2 \\
     \end{{tabular*}}\vspace{{-6pt}}
 }}
