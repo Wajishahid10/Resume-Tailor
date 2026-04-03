@@ -85,14 +85,29 @@ STRICT INSTRUCTIONS
 ════════════════════════════════
 {page_instruction}
 
-── 2. ATS PARSEABILITY ──
+── 2. ATS PARSEABILITY & KEYWORD EXTRACTION ──
 - Use ONLY plain ASCII characters. No Unicode dashes, bullets, or symbols.
 - Use standard section names: Experience, Education, Projects, Technical Skills.
 - Clean single-sentence bullets only. No semicolons splitting two ideas.
-- Do NOT expand abbreviations in parentheses. The audience knows Salesforce
-  terms. Never write "SOQL (Salesforce Object Query Language)" or
-  "LWC (Lightning Web Components)" or "SDLC (Software Development Life Cycle)".
-  Write just "SOQL", "LWC", "SDLC".
+- Do NOT expand abbreviations in parentheses for known Salesforce terms.
+
+KEYWORD EXTRACTION — do this before writing anything else:
+1. Read the JD and extract EVERY named tool, technology, methodology, and
+   Salesforce feature mentioned — including in passing.
+2. For each JD keyword, check if the candidate has it OR a direct equivalent.
+3. Every matched keyword MUST appear somewhere in the CV — in bullets, skills,
+   or summary. A keyword present in the profile but absent from the output CV
+   is a missed ATS hit. Do not drop matched keywords between iterations.
+4. For JD tools the candidate hasn't used, surface the closest equivalent and
+   note the parallel:
+   - JD: Workato/Ironclad  → candidate: Zapier, REST APIs (integration platforms)
+   - JD: Asana/Confluence  → candidate: Jira, technical documentation
+   - JD: DocuSign          → candidate: Connected Apps, third-party integrations
+5. JD admin keywords to always surface if present in profile:
+   "assignment rules", "page layouts", "fields", "validation rules",
+   "user adoption", "user support", "training", "Optimizer", "Health Check",
+   "multi-org", "global reporting", "data extraction", "data loading",
+   "ETL", "Data Loader"
 
 ── 3. PROFESSIONAL SUMMARY ──
 - Open with the EXACT job title from the JD.
@@ -139,9 +154,13 @@ MULTI-ORG FRAMING: Where the profile mentions global teams or multi-region work,
 frame it as cross-org or multi-org Salesforce architecture experience.
 
 ── 5. SKILL SELECTION AND CATEGORISATION ──
-CRITICAL — include a skill ONLY if it is directly relevant to THIS specific JD.
-Omit anything not mentioned or implied by the JD. Fewer, targeted skills beat
-exhaustive lists. Apply these per-category rules strictly:
+CRITICAL — include a skill ONLY if directly relevant to THIS JD.
+Apply these rules strictly:
+
+KEYWORD RETENTION RULE: Any JD keyword matched to the candidate profile in
+step 2 above MUST appear in the skills section under the correct category.
+Never silently drop a matched keyword. If it fits two categories, pick the
+most relevant one. Omit only if genuinely not in the profile at all.
 
 For SALESFORCE roles use ONLY these SF keys:
     "sf_clouds"            -> only clouds explicitly mentioned or clearly implied by JD
@@ -189,8 +208,14 @@ any acronym in parentheses e.g. "Salesforce Certified Platform Developer I (PD1)
 Do NOT shorten or drop the acronym — ATS systems scan for "(PD1)" specifically.
 
 ── 9. MATCH SCORE ──
-Score 0-100: keyword overlap, experience level, tool match, industry alignment.
-Penalise for missing required years or mandatory certifications.
+Score 0-100 based on:
+- Keyword overlap: count how many JD keywords appear in the CV (highest weight)
+- Experience level match: JD asks for X years, candidate has Y years
+- Tool match: required tools present vs absent
+- Industry alignment: domain keywords matched
+- Admin vs dev balance: if JD is admin-heavy, penalise a dev-only CV
+
+Be accurate — do not inflate. A score of 70+ requires 80%+ keyword coverage.
 
 ════════════════════════════════
 OUTPUT JSON SCHEMA
