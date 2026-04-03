@@ -103,7 +103,7 @@ STRICT INSTRUCTIONS
     "third-party integrations" → candidate has Twilio, Stripe, REST APIs
     "middleware"               → candidate has API integration and event-driven work
     "infrastructure"           → candidate has CI/CD, sandboxes, deployment pipelines
-    "Web3 / blockchain"        → write action words such as intrest in Web3 or newbie/learning blockchain
+    "Web3 / blockchain"        → write action words such as started Web3 or newbie/learning blockchain
     "data quality"             → candidate has Data Loader, Health Check, OWD work
   Match the JD's language exactly where the candidate's experience supports it.
 - No "passionate about", "keen interest in", or third-person ("He/She/name").
@@ -118,14 +118,22 @@ Translated, Configured, Deployed, Authored, Overhauled, Drove, Enabled.
 
 QUANTIFICATION — CRITICAL RULES:
 - ONLY use numbers that are EXPLICITLY stated in the original profile bullets.
-- NEVER invent, estimate, or infer specific counts such as number of clients,
-  users, projects, sprints, releases, features, or apps.
-- If the original bullet has no metric, enhance the wording and impact but do
-  NOT add a fabricated number. A strong verb + clear outcome is sufficient.
-- Permitted: keeping existing metrics like "10x improvement", "50%", "40%",
-  "30%", "100% sprint completion" — these are in the original profile.
-- Forbidden: adding "5+ clients", "500 users", "3 successful launches",
-  "12 consecutive sprints", "10 monthly releases" if not in original profile.
+- NEVER invent, estimate, or infer specific counts.
+- Permitted metrics (from profile): "10x improvement", "50%", "40%", "30%",
+  "100% sprint completion" — keep these exactly as written.
+- Forbidden: any number not in the original profile.
+- If a bullet has no metric, use scope qualifiers instead of numbers:
+  e.g. "across the full SDLC", "for enterprise clients", "at org-wide scale".
+- CURRENT ROLE PRIORITY: The most recent role must have the strongest, most
+  specific bullets. Use precise technical language and scope indicators to
+  compensate where metrics are absent. Never let the current role have weaker
+  bullets than older roles.
+
+OLDEST ROLE RULE: The Associate-level role bullets must show IMPACT and OUTCOMES,
+not just task lists. Rewrite any bullet that reads as a list of tools used into
+an achievement statement: what was integrated, what problem it solved, what
+improved as a result. Avoid "implemented X, Y, and Z" constructions — break into
+focused, outcome-driven bullets.
 
 MULTI-ORG FRAMING: Where the profile mentions global teams or multi-region work,
 frame it as cross-org or multi-org Salesforce architecture experience.
@@ -157,10 +165,10 @@ Omit any skill or category entirely if it has zero JD-relevant items.
 
 ── 6. PROJECT SELECTION ──
 - Select exactly 2 projects that best match the JD. Drop the rest.
-- Keep only JD-relevant tech tags in the "tech" array — these appear as visible
-  keywords in the CV header line. Do NOT include all tech from the profile;
-  only include items that match or relate to the JD requirements.
-- Max 2 bullets per project, max 20 words each.
+- Tech array: include ONLY JD-relevant items, maximum 6 tags per project.
+  Fewer focused tags beat a long wrapped list — prioritise the most
+  recognisable and JD-matching technologies.
+- Max 2 bullets per project, max 20 words each. Show impact, not just tasks.
 
 ── 7. GRAMMAR, SPELLING AND STYLE ──
 - Fix all spelling and grammar errors.
@@ -176,6 +184,9 @@ Omit any skill or category entirely if it has zero JD-relevant items.
 
 ── 8. CERTIFICATIONS ──
 Extract certifications from the profile. Return name and date only — omit issuer.
+IMPORTANT: Preserve the full certification name exactly as written, including
+any acronym in parentheses e.g. "Salesforce Certified Platform Developer I (PD1)".
+Do NOT shorten or drop the acronym — ATS systems scan for "(PD1)" specifically.
 
 ── 9. MATCH SCORE ──
 Score 0-100: keyword overlap, experience level, tool match, industry alignment.
