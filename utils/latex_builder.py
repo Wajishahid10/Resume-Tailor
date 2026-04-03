@@ -136,11 +136,10 @@ def _build_experience(experiences: list) -> str:
 
 def _build_projects(projects: list) -> str:
     """
-    Renders projects with:
-      - Row 1: Bold project name (+ optional repo link)  |  date
-      - Row 2: Italic tech stack (full width, no overflow)
-    This matches the 3-arg \\resumeProjectHeading{name}{tech}{date} command.
-    IMPORTANT: must stay in sync with \\resumeProjectHeading in _make_preamble.
+    Renders projects using the 2-arg \\resumeProjectHeading{heading}{date}.
+    Arg 1 = name + tech (wraps naturally via p{} column — no truncation).
+    Arg 2 = date (right-aligned).
+    Tech list is pre-filtered by Gemini to JD-relevant items only.
     """
     lines = []
     for proj in projects:
@@ -153,17 +152,16 @@ def _build_projects(projects: list) -> str:
         if not bullets and proj.get("description"):
             bullets = [proj["description"]]
 
-        # Build the name part — repo link appended if available
-        name_part = f"\\textbf{{{name}}}"
+        # Build heading: bold name | italic tech | optional repo link
+        heading = f"\\textbf{{{name}}} $|$ \\textit{{{tech}}}"
         if link:
-            safe_link  = esc_url(_strip_prefix(link))
-            name_part += f" $|$ \\href{{https://{safe_link}}}{{\\underline{{repo}}}}"
+            safe_link = esc_url(_strip_prefix(link))
+            heading  += f" $|$ \\href{{https://{safe_link}}}{{\\underline{{repo}}}}"
 
-        # 3 args: {name+link} {tech} {date}
-        # Row 1: name+link | date   Row 2: tech (full width)
+        # 2 args: {heading}{date} — p{} column in LaTeX handles wrapping
         lines.append(
             f"    \\resumeProjectHeading\n"
-            f"      {{{name_part}}}{{{tech}}}{{{date}}}\n"
+            f"      {{{heading}}}{{{date}}}\n"
             f"      \\resumeItemListStart"
         )
         for b in bullets:
@@ -307,14 +305,14 @@ def _make_preamble(pages: int = 2) -> str:
     \end{{tabular*}}\vspace{{-6pt}}
 }}
 
-% 3-arg command: #1=name+link, #2=tech (own row, no overflow), #3=date
-\newcommand{\resumeProjectHeading}[3]{
+% 2-arg command: #1=heading (name+tech, wraps via p column), #2=date
+% p{{0.73\\textwidth}} lets long tech lists wrap — no truncation
+\newcommand{{\resumeProjectHeading}}[2]{{
     \item
-    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
-      \small\textbf{#1} & \small #3 \\
-      \small\textit{#2} & \\
-    \end{tabular*}\vspace{-6pt}
-}
+    \begin{{tabular*}}{{0.97\textwidth}}{{p{{0.73\textwidth}}@{{\extracolsep{{\fill}}}}r}}
+      \small #1 & \small #2 \\
+    \end{{tabular*}}\vspace{{-6pt}}
+}}
 
 \newcommand{{\resumeSubItem}}[1]{{\resumeItem{{#1}}\vspace{{-4pt}}}}
 \renewcommand\labelitemii{{$\vcenter{{\hbox{{\tiny$\bullet$}}}}$}}
