@@ -98,16 +98,26 @@ KEYWORD EXTRACTION — do this before writing anything else:
 3. Every matched keyword MUST appear somewhere in the CV — in bullets, skills,
    or summary. A keyword present in the profile but absent from the output CV
    is a missed ATS hit. Do not drop matched keywords between iterations.
-4. For JD tools the candidate hasn't used, surface the closest equivalent and
-   note the parallel:
-   - JD: Workato/Ironclad  → candidate: Zapier, REST APIs (integration platforms)
-   - JD: Asana/Confluence  → candidate: Jira, technical documentation
-   - JD: DocuSign          → candidate: Connected Apps, third-party integrations
+4. For JD tools the candidate hasn't used, surface the closest equivalent:
+   - JD: Workato/Ironclad  -> candidate: Zapier, REST API integrations
+   - JD: Asana/Confluence  -> candidate: Jira, technical documentation
+   - JD: DocuSign          -> candidate: Connected Apps, third-party integrations
 5. JD admin keywords to always surface if present in profile:
-   "assignment rules", "page layouts", "fields", "validation rules",
-   "user adoption", "user support", "training", "Optimizer", "Health Check",
-   "multi-org", "global reporting", "data extraction", "data loading",
-   "ETL", "Data Loader"
+   "workflow rules", "assignment rules", "page layouts", "fields",
+   "validation rules", "user adoption", "user support", "training",
+   "Optimizer", "Health Check", "multi-org", "global reporting",
+   "data extraction", "data loading", "ETL", "Data Loader"
+
+KEYWORD DENSITY RULE — CRITICAL:
+ATS score = matched keywords / total words. More words without more matches
+LOWERS your score. Apply this hard filter to skills:
+- Include a skill ONLY if it appears in the JD or is a direct analogue.
+- Every item added to sf_features or sf_ai_automation that is NOT in the JD
+  dilutes keyword density. Remove: Tab, Global Actions, Field Set, Object
+  Access, Program Management, Outcome Management, Field History, Compact
+  Layout, App Builder, App Management, Lightning Record Pages unless the JD
+  explicitly mentions them.
+- Target: sf_features should have 10-15 items max, all JD-matched.
 
 ── 3. PROFESSIONAL SUMMARY ──
 - Open with the EXACT job title from the JD.
@@ -144,11 +154,12 @@ QUANTIFICATION — CRITICAL RULES:
   compensate where metrics are absent. Never let the current role have weaker
   bullets than older roles.
 
-OLDEST ROLE RULE: The Associate-level role bullets must show IMPACT and OUTCOMES,
-not just task lists. Rewrite any bullet that reads as a list of tools used into
-an achievement statement: what was integrated, what problem it solved, what
-improved as a result. Avoid "implemented X, Y, and Z" constructions — break into
-focused, outcome-driven bullets.
+OLDEST ROLE RULE: The Associate-level role bullets must show IMPACT and OUTCOMES.
+Rewrite task-list bullets into achievement statements. Avoid "implemented X, Y,
+and Z" constructions. Additionally — if the JD mentions "user support", "user
+adoption", or "training", surface this from the profile's admin/CRM work:
+frame cross-functional delivery, stakeholder engagement, and process automation
+as supporting user adoption and operational efficiency.
 
 MULTI-ORG FRAMING: Where the profile mentions global teams or multi-region work,
 frame it as cross-org or multi-org Salesforce architecture experience.
@@ -171,16 +182,17 @@ For SALESFORCE roles use ONLY these SF keys:
     "sf_cicd_deployment"   -> only DevOps tools the JD references
     "sf_data_security"     -> only data/security items the JD mentions
     "sf_developer_tools"   -> Git, Postman, VS Code — only tools relevant to JD
-    "sf_languages"         -> STRICT: include ONLY languages the JD explicitly
-                              requires or that are core to Salesforce dev (Apex,
-                              SOQL, SOSL, JavaScript). NEVER include Java, C#,
-                              Kotlin, Dart, C, C++, Rust, or Flutter for a
-                              Salesforce role unless the JD explicitly asks for them.
-    "sf_methodologies"     -> only methodologies the JD references
+    "sf_languages"         -> STRICT: Apex, SOQL, SOSL, JavaScript only for
+                              Salesforce roles. NEVER add Java, C#, Kotlin,
+                              Dart, C, C++, Rust unless JD explicitly asks.
+    "sf_methodologies"     -> only methodologies the JD references. If JD
+                              mentions "user adoption" or "training", add those.
 
 For NON-SALESFORCE roles use: "languages", "frameworks", "tools", "other"
 NEVER mix SF keys with generic keys.
-Omit any skill or category entirely if it has zero JD-relevant items.
+Omit any category entirely if it has zero JD-relevant items.
+HARD CAP: sf_features maximum 15 items. sf_apis_integrations maximum 15 items.
+Remove any item not directly mentioned or implied by the JD.
 
 ── 6. PROJECT SELECTION ──
 - Select exactly 2 projects that best match the JD. Drop the rest.
