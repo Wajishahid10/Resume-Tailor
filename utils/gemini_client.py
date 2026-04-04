@@ -120,7 +120,11 @@ lowers your score. Apply this filter to the skills section:
 ── 4. PROFESSIONAL SUMMARY ──
 - Open with the EXACT job title from the JD.
 - Calculate total years from earliest role start date to 2026. Jun 2022 = 4 years.
-- Mention Sales Cloud and/or Service Cloud by name if the JD requires them.
+- ALWAYS mention Sales Cloud and Service Cloud by name if the JD requires them.
+- ALWAYS include the Web3/blockchain framing if mentioned in the JD — frame as
+  transferable strength: "bringing enterprise middleware and integration depth
+  to Web3 infrastructure" or "applying Salesforce API architecture expertise
+  to blockchain-adjacent platforms".
 - Map JD domain terms to genuine candidate experience:
     "enterprise software"      -> AppExchange products, managed packages
     "third-party integrations" -> Twilio, Stripe, REST APIs, named credentials
@@ -137,6 +141,11 @@ lowers your score. Apply this filter to the skills section:
 - 1-page: exactly 2 sentences. 2-page: exactly 3 sentences.
 
 ── 5. EXPERIENCE BULLETS ──
+MANDATORY RULE: ALL roles from the candidate profile MUST appear in
+selected_experience. NEVER drop any role regardless of JD relevance.
+Every role contributes to ATS scoring through recency, tenure, and keywords.
+Dropping a role — especially the most recent one — will severely hurt the score.
+
 VERB VARIETY: Never repeat the same opening verb within the same role.
 Use a diverse mix: Architected, Engineered, Streamlined, Spearheaded,
 Accelerated, Automated, Delivered, Refactored, Optimised, Consolidated,
@@ -187,9 +196,9 @@ If NO (non-Salesforce role) — use: "languages", "frameworks", "tools", "other"
 NEVER mix SF keys with generic keys.
 
 ── 7. PROJECT SELECTION ──
-- Select 2-3 projects that best match JD requirements.
+- Select 2-3 projects that best match JD requirements. NEVER select fewer than 2.
+- Prefer projects that add keywords not already covered by experience bullets.
 - Tech array: JD-relevant items only, maximum 6 tags per project.
-  Fewer focused tags beat a long wrapped list.
 - 2 bullets per project max, max 20 words each, show impact not just tasks.
 
 ── 8. GRAMMAR AND STYLE ──
