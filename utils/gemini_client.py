@@ -180,7 +180,15 @@ supplement with relevant items from general profile skills (languages, tools).
 Use ONLY these SF keys, omit any with zero JD-relevant items:
   "sf_clouds"            -> platform clouds mentioned or implied by JD
   "sf_ai_automation"     -> automation tools the JD references
-  "sf_features"          -> Salesforce config features the JD requires (max 15)
+  "sf_features"          -> Salesforce config features the JD requires (max 15).
+                            ONLY include platform features — things you configure
+                            inside Salesforce Setup. NEVER put job responsibilities
+                            like "User Support", "User Adoption", or "Training"
+                            here — those go in sf_methodologies. NEVER include:
+                            Tab, Global Actions, Field Set, Object Access,
+                            Compact Layout, Layout, App Management, Program
+                            Management, Outcome Management, Field History,
+                            unless the JD explicitly names them.
   "sf_development"       -> Apex, LWC, SOQL — only what the JD needs
   "sf_apis_integrations" -> integration tools/protocols the JD mentions
   "sf_cicd_deployment"   -> DevOps tools the JD references
@@ -189,8 +197,10 @@ Use ONLY these SF keys, omit any with zero JD-relevant items:
   "sf_languages"         -> Apex, SOQL, SOSL, JavaScript ONLY for SF roles.
                             NEVER add Java, C#, Kotlin, Dart, C, C++, Rust
                             unless the JD explicitly requires them.
-  "sf_methodologies"     -> process methodologies the JD references; include
-                            "User Adoption" and "Training" if JD mentions them.
+  "sf_methodologies"     -> process methodologies the JD references. If JD
+                            mentions "user adoption", "user support", or
+                            "training", include them HERE not in sf_features.
+                            These are responsibilities, not Salesforce features.
 
 If NO (non-Salesforce role) — use: "languages", "frameworks", "tools", "other"
 NEVER mix SF keys with generic keys.

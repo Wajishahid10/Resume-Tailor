@@ -136,16 +136,15 @@ def _build_experience(experiences: list) -> str:
 
 def _build_projects(projects: list) -> str:
     """
-    Renders projects using the 2-arg \\resumeProjectHeading{heading}{date}.
-    Arg 1 = name + tech (wraps naturally via p{} column — no truncation).
-    Arg 2 = date (right-aligned).
-    Tech list is pre-filtered by Gemini to JD-relevant items only.
+    Renders projects using 2-arg \\resumeProjectHeading{heading}{date}.
+    Tech is hard-capped at 5 items in Python to prevent line overflow —
+    Gemini pre-filters to JD-relevant items, Python caps for layout safety.
     """
     lines = []
     for proj in projects:
         name    = esc(proj.get("name", ""))
-        # Tech list is pre-filtered by Gemini to JD-relevant items only
-        tech    = ", ".join(esc(t) for t in proj.get("tech", []))
+        # Hard cap at 5 — prevents overflow in the standard l@fill r tabular
+        tech    = ", ".join(esc(t) for t in proj.get("tech", [])[:5])
         date    = esc(proj.get("date", ""))
         link    = proj.get("link", "").strip()
         bullets = proj.get("bullets", [])
@@ -305,11 +304,11 @@ def _make_preamble(pages: int = 2) -> str:
     \end{{tabular*}}\vspace{{-6pt}}
 }}
 
-% 2-arg command: #1=heading (name+tech, wraps via p column), #2=date
-% p{{0.73\\textwidth}} lets long tech lists wrap — no truncation
+% Standard 2-col format — ATS parsers handle l@{{\extracolsep{{\fill}}}}r reliably.
+% Tech is hard-limited to 5 items in Python so it never overflows this line.
 \newcommand{{\resumeProjectHeading}}[2]{{
     \item
-    \begin{{tabular*}}{{0.97\textwidth}}{{p{{0.79\textwidth}}@{{\extracolsep{{\fill}}}}r}}
+    \begin{{tabular*}}{{0.97\textwidth}}{{l@{{\extracolsep{{\fill}}}}r}}
       \small #1 & \small #2 \\
     \end{{tabular*}}\vspace{{-6pt}}
 }}
