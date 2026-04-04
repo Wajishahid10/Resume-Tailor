@@ -143,8 +143,8 @@ def _build_projects(projects: list) -> str:
     lines = []
     for proj in projects:
         name    = esc(proj.get("name", ""))
-        # Hard cap at 5 — prevents overflow in the standard l@fill r tabular
-        tech    = ", ".join(esc(t) for t in proj.get("tech", [])[:5])
+        # Hard cap at 4 — prevents overflow into date column in standard tabular
+        tech    = ", ".join(esc(t) for t in proj.get("tech", [])[:4])
         date    = esc(proj.get("date", ""))
         link    = proj.get("link", "").strip()
         bullets = proj.get("bullets", [])
@@ -471,10 +471,11 @@ def compile_latex_to_pdf(latex_content: str, timeout: int = 90) -> bytes:
         ]
 
         last_result = None
-        for _ in range(2):   # Two passes for correct layout
-            last_result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=timeout,
-            )
+        # Single pass is sufficient for resumes — no \ref, \cite, or TOC
+        # that would require a second pass. Saves 20-30s on Streamlit Cloud.
+        last_result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+        )
 
         if os.path.exists(pdf_path):
             with open(pdf_path, "rb") as f:
